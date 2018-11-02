@@ -33,7 +33,7 @@ export class BootScene extends Phaser.Scene {
 
     let platforms = this.physics.add.staticGroup();
 
-    (<Phaser.Physics.Arcade.Sprite>platforms.create(400, 568, Sprites.PLATFORM))
+    (platforms.create(400, 568, Sprites.PLATFORM) as Phaser.Physics.Arcade.Sprite)
       .setScale(2)
       .refreshBody();
 
@@ -47,6 +47,8 @@ export class BootScene extends Phaser.Scene {
     player
       .setBounce(0.2)
       .setCollideWorldBounds(true);
+
+    this.cameras.main.startFollow(this.player, true);
 
     this.anims.create({
       key: "left",
@@ -87,12 +89,12 @@ export class BootScene extends Phaser.Scene {
     this.physics.add.overlap(player, stars, (_, star: Physics.Arcade.Sprite) => {
       star.disableBody(true, true)
 
-      this.score += 10; 
+      this.score += 10;
       this.scoreText.setText(`Score: ${this.score}`);
     }, null, this);
 
-    this.scoreText = this.add.text(16, 16, "Score: 0", 
-      { fontSize: "32px", fill: "#000" });
+    this.scoreText = this.add.text(16, 16, "Score: 0",
+      { fontSize: "32px", fill: "#fff" }).setScrollFactor(0);
   }
 
   update() {
