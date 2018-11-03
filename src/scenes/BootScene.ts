@@ -1,5 +1,10 @@
 import { FOREVER, Physics } from "phaser";
 
+const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
+"RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up"];
+const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length  | 0]}`
+
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({
@@ -59,7 +64,7 @@ export class BootScene extends Phaser.Scene {
 
     this.anims.create({
       key: "turn",
-      frames: [{ key: Sprites.DUDE, frame: 5 }],
+      frames: [{ key: Sprites.DUDE, frame: 4 }],
       frameRate: 10,
       repeat: FOREVER
     });
@@ -95,6 +100,9 @@ export class BootScene extends Phaser.Scene {
 
     this.scoreText = this.add.text(16, 16, "Score: 0",
       { fontSize: "32px", fill: "#fff" }).setScrollFactor(0);
+
+    this.add.text(16, 48, hybrid,
+      { fontSize: "16px", fill: "#fff" }).setScrollFactor(0);
   }
 
   update() {
