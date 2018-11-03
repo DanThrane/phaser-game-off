@@ -1,8 +1,8 @@
 import { FOREVER, Physics } from "phaser";
 
 const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
-"RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up"];
-const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length  | 0]}`
+  "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up"];
+const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length | 0]}`
 
 
 export class BootScene extends Phaser.Scene {
@@ -42,8 +42,15 @@ export class BootScene extends Phaser.Scene {
       .setScale(2)
       .refreshBody();
 
+    
+    platforms.create(600, 368, Sprites.PLATFORM);
     platforms.create(600, 400, Sprites.PLATFORM);
+    platforms.create(600, 432, Sprites.PLATFORM);
+
     platforms.create(50, 250, Sprites.PLATFORM);
+    platforms.create(50, 282, Sprites.PLATFORM);
+    platforms.create(50, 314, Sprites.PLATFORM);
+    
     platforms.create(750, 220, Sprites.PLATFORM);
 
     this.platforms = platforms;
@@ -107,18 +114,24 @@ export class BootScene extends Phaser.Scene {
 
   update() {
     if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-160);
+      this.player.setVelocityX(-160 + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
     } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(160);
+      this.player.setVelocityX(160 + (this.cursors.shift.isDown ? 80 : 0));
       this.player.anims.play("right", true);
     } else {
       this.player.setVelocityX(0);
       this.player.anims.play("turn");
     }
 
+    // Standard jump
     if (this.cursors.up.isDown && this.player.body.touching.down) {
       this.player.setVelocityY(-330);
+    }
+
+    // Wall jump
+    if (this.cursors.up.isDown && (this.player.body.touching.left || this.player.body.touching.right)) {
+      this.player.setVelocityY(-220);
     }
   }
 }
