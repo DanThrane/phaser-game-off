@@ -16,6 +16,7 @@ export class BootScene extends Phaser.Scene {
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private stars: Phaser.Physics.Arcade.Group;
   private player: Phaser.Physics.Arcade.Sprite;
+  private playerCanWallJump: boolean = false;
 
   private cursors: CursorKeys;
   private score: number = 0;
@@ -37,7 +38,6 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     this.add.image(400, 300, Sprites.SKY);
-    this.add.image(400, 300, Sprites.STAR);
 
     let platforms = this.physics.add.staticGroup();
 
@@ -63,13 +63,17 @@ export class BootScene extends Phaser.Scene {
       .setBounce(0.2)
       .setCollideWorldBounds(true)
       .setMaxVelocity(400)
-      .setDrag(100);
+      .setDrag(150);
 
 
     const hitboxes = this.physics.add.group();
-    hitboxes.create(0, 0, null);
 
-    this.cameras.main.startFollow(this.player, true);
+    hitboxes.create(50, 0, null).setDrag(100);
+
+    this.physics.add.collider(platforms, hitboxes);
+    this.physics.add.collider(hitboxes, player);
+
+    this.cameras.main.startFollow(player, true);
 
     this.anims.create({
       key: "left",
@@ -104,12 +108,11 @@ export class BootScene extends Phaser.Scene {
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8))
     }, null);
 
-    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(player, platforms, () => this.playerCanWallJump = true);
     this.physics.add.collider(stars, platforms);
 
     this.physics.add.overlap(player, stars, (_, star: Physics.Arcade.Sprite) => {
-      star.disableBody(true, true)
-
+      star.disableBody(true, true);
       this.score += 10;
       this.scoreText.setText(`Score: ${this.score}`);
     }, null, this);
@@ -126,6 +129,8 @@ export class BootScene extends Phaser.Scene {
 
   update() {
     const movementSpeed = 320;
+
+
     if (this.cursors.left.isDown) {
       this.player.setAccelerationX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
@@ -143,16 +148,19 @@ export class BootScene extends Phaser.Scene {
     }
 
     // Wall jump, left
-    if (this.cursors.up.isDown && this.player.body.touching.left) {
-      this.player.setVelocityX(300)
-      this.player.setVelocityY(-300);
-    }
+    if (this.cursors.up.isDown && this.playerCanWallJump) {
+      if (this.player.body.touching.left) {
+        this.player.setVelocityX(300)
+        this.player.setVelocityY(-300);
+      }
 
-    // Wall jump, right
-    if (this.cursors.up.isDown && this.player.body.touching.right) {
-      this.player.setVelocityX(-300)
-      this.player.setVelocityY(-300);
+      // Wall jump, right
+      if (this.player.body.touching.right) {
+        this.player.setVelocityX(-300)
+        this.player.setVelocityY(-300);
+      }
     }
+    this.playerCanWallJump = false;
   }
 }
 
