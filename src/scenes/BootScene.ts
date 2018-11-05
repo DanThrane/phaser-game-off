@@ -1,7 +1,8 @@
 import { FOREVER, Physics } from "phaser";
 
 const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
-  "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up"];
+  "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up",
+  "Dungeon Crawler"];
 const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length | 0]}`
 
 
@@ -15,9 +16,11 @@ export class BootScene extends Phaser.Scene {
   private platforms: Phaser.Physics.Arcade.StaticGroup;
   private stars: Phaser.Physics.Arcade.Group;
   private player: Phaser.Physics.Arcade.Sprite;
+
   private cursors: CursorKeys;
   private score: number = 0;
   private scoreText: Phaser.GameObjects.Text;
+
 
   preload() {
     this.load.image(Sprites.BOMB, "assets/bomb.png");
@@ -42,7 +45,7 @@ export class BootScene extends Phaser.Scene {
       .setScale(2)
       .refreshBody();
 
-    
+
     platforms.create(600, 368, Sprites.PLATFORM);
     platforms.create(600, 400, Sprites.PLATFORM);
     platforms.create(600, 432, Sprites.PLATFORM);
@@ -50,7 +53,7 @@ export class BootScene extends Phaser.Scene {
     platforms.create(50, 250, Sprites.PLATFORM);
     platforms.create(50, 282, Sprites.PLATFORM);
     platforms.create(50, 314, Sprites.PLATFORM);
-    
+
     platforms.create(750, 220, Sprites.PLATFORM);
 
     this.platforms = platforms;
@@ -58,7 +61,13 @@ export class BootScene extends Phaser.Scene {
     let player = this.player = this.physics.add.sprite(100, 450, Sprites.DUDE);
     player
       .setBounce(0.2)
-      .setCollideWorldBounds(true);
+      .setCollideWorldBounds(true)
+      .setMaxVelocity(400)
+      .setDrag(100);
+
+
+    const hitboxes = this.physics.add.group();
+    hitboxes.create(0, 0, null);
 
     this.cameras.main.startFollow(this.player, true);
 
@@ -91,7 +100,7 @@ export class BootScene extends Phaser.Scene {
       setXY: { x: 12, y: 0, stepX: 70 }
     });;
 
-    this.stars.children.iterate((child) => {
+    this.stars.children.iterate(child => {
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8))
     }, null);
 
@@ -110,17 +119,21 @@ export class BootScene extends Phaser.Scene {
 
     this.add.text(16, 48, hybrid,
       { fontSize: "16px", fill: "#fff" }).setScrollFactor(0);
+
+    this.add.text(16, this.game.canvas.height - 32, "Move on arrow keys, wall jump by pressing up on contact",
+      { fontSize: "16px", fill: "#fff" }).setScrollFactor(0);
   }
 
   update() {
+    const movementSpeed = 320;
     if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-160 + (this.cursors.shift.isDown ? -80 : 0));
+      this.player.setAccelerationX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
     } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(160 + (this.cursors.shift.isDown ? 80 : 0));
+      this.player.setAccelerationX(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
       this.player.anims.play("right", true);
     } else {
-      this.player.setVelocityX(0);
+      this.player.body.acceleration.set(0);
       this.player.anims.play("turn");
     }
 
@@ -129,9 +142,16 @@ export class BootScene extends Phaser.Scene {
       this.player.setVelocityY(-330);
     }
 
-    // Wall jump
-    if (this.cursors.up.isDown && (this.player.body.touching.left || this.player.body.touching.right)) {
-      this.player.setVelocityY(-220);
+    // Wall jump, left
+    if (this.cursors.up.isDown && this.player.body.touching.left) {
+      this.player.setVelocityX(300)
+      this.player.setVelocityY(-300);
+    }
+
+    // Wall jump, right
+    if (this.cursors.up.isDown && this.player.body.touching.right) {
+      this.player.setVelocityX(-300)
+      this.player.setVelocityY(-300);
     }
   }
 }
