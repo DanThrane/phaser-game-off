@@ -5,8 +5,8 @@ import { BootScene } from "./scenes/BootScene";
 
 const config: GameConfig = {
   version: "0.1,0",
-  width: 800,
-  height: 600,
+  width: 1920,
+  height: 1080,
   type: Phaser.AUTO,
   parent: "game",
   scene: [BootScene],

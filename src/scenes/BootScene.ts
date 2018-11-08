@@ -1,10 +1,12 @@
 import { FOREVER, Physics } from "phaser";
+import { buildLayout } from "../DungeonGeneration";
 
 const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
   "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up",
   "Dungeon Crawler"];
 const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length | 0]}`
 
+const BLOCK_SIZE = 32;
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -21,6 +23,8 @@ export class BootScene extends Phaser.Scene {
   private cursors: CursorKeys;
   private score: number = 0;
   private scoreText: Phaser.GameObjects.Text;
+  private dunGenOffsetX: number = 0;
+  private dunGenOffsetY: number = 200;
 
 
   preload() {
@@ -28,6 +32,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image(Sprites.PLATFORM, "assets/platform.png");
     this.load.image(Sprites.SKY, "assets/sky.png");
     this.load.image(Sprites.STAR, "assets/star.png");
+    this.load.image(Sprites.WALL, "assets/bricksdefault.png");
 
     this.load.spritesheet(
       Sprites.DUDE,
@@ -45,7 +50,6 @@ export class BootScene extends Phaser.Scene {
       .setScale(2)
       .refreshBody();
 
-
     platforms.create(600, 368, Sprites.PLATFORM);
     platforms.create(600, 400, Sprites.PLATFORM);
     platforms.create(600, 432, Sprites.PLATFORM);
@@ -57,6 +61,13 @@ export class BootScene extends Phaser.Scene {
     platforms.create(750, 220, Sprites.PLATFORM);
 
     this.platforms = platforms;
+    // Uncomment me out for generation
+    /* for (let i = 0; i < 4; i++) {
+      let { room, width, height } = buildLayout(this.dunGenOffsetX, this.dunGenOffsetY, this.physics);
+      this.dunGenOffsetX += width * BLOCK_SIZE - BLOCK_SIZE; // Final block should overlap with next
+      this.platforms.addMultiple(room)
+    } */
+
 
     let player = this.player = this.physics.add.sprite(100, 450, Sprites.DUDE);
     player
@@ -64,14 +75,6 @@ export class BootScene extends Phaser.Scene {
       .setCollideWorldBounds(true)
       .setMaxVelocity(400)
       .setDrag(150);
-
-
-    const hitboxes = this.physics.add.group();
-
-    hitboxes.create(50, 0, null).setDrag(100);
-
-    this.physics.add.collider(platforms, hitboxes);
-    this.physics.add.collider(hitboxes, player);
 
     this.cameras.main.startFollow(player, true);
 
@@ -130,7 +133,6 @@ export class BootScene extends Phaser.Scene {
   update() {
     const movementSpeed = 320;
 
-
     if (this.cursors.left.isDown) {
       this.player.setAccelerationX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
@@ -164,10 +166,11 @@ export class BootScene extends Phaser.Scene {
   }
 }
 
-enum Sprites {
+export enum Sprites {
   BOMB = "bomb",
   DUDE = "dude",
   PLATFORM = "platform",
   SKY = "sky",
-  STAR = "star"
+  STAR = "star",
+  WALL = "wall"
 }
