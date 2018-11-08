@@ -16,6 +16,7 @@ Elements that we want in the prototype:
  - [] At least 1 small (type of) enemy
  - [] Basic combat gameplay (attack with mouseclick or whatever)
  - [] Basic graphics (go for very simple art or geometric objects in easy distinguishable colors)
+ - [] Hybrid-gameplay (2 slots for abilities, can be swapped (or assigned if starting with none) when defeating a boss (ability defined by boss))
 
 Insert your name/handle/username in square brackets if you want to assign yourself to a task.
 
