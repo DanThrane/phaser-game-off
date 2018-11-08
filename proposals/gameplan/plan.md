@@ -6,9 +6,9 @@ Refer to [the original proposal](/proposals/realmofthemadgod.md) for the origina
 ## Story
 What's the _story_?
 Story ideas (actually more like plot ideas but whatever):
- - The Thusand Year (evil) king returns from his long slumper to take over the world with his demon (or undead) armies
- - An odyssey tale about your tribe, striken by horrible mutations from their expose to the waste that seemed totally ok to settle in at first, desperate attempt to get to a promised land (e.g. a land were they wouldn't die out) 
- - A rouge advanced AI has taken over a robot production facility and you, and you're group, the Special AI Containment Unit, is sent in to deal with the AI's mischief
+ - (Fantasy) The Thusand Year (evil) king returns from his long slumper to take over the world with his demon (or undead) armies
+ - (Post-apocalyptic (possible)) An odyssey tale about your tribe, striken by horrible mutations from their expose to the waste that seemed totally ok to settle in at first, desperate attempt to get to a promised land (e.g. a land were they wouldn't die out) 
+ - (Sci-fi) A rouge advanced AI has taken over a robot production facility and you, and you're group, the Special AI Containment Unit, is sent in to deal with the AI's mischief
 
 ## Prototype
 Elements that we want in the prototype:
