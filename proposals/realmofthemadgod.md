@@ -9,5 +9,5 @@ Dvs der er N choose 2 mulige hybrid karakter muligheder i spillet. Hver klasse h
 Selvfølgelig ikke så meget mindre kompliceret end andre forslag, dog med den fordel at der kun er én game mode at implementere, og derfor tænker jeg hurtigere man kan komme til en spilbar prototype. Man kan starte med at have 2-3 bosser og så er det fint playable.
 
 ## Referencer
-[RofMG game](https://www.realmofthemadgod.com/)
-[RofMG on Wikipedia](https://en.wikipedia.org/wiki/Realm_of_the_Mad_God)
+ - [RofMG game](https://www.realmofthemadgod.com/)
+ - [RofMG on Wikipedia](https://en.wikipedia.org/wiki/Realm_of_the_Mad_God)
