@@ -1,6 +1,7 @@
 /// <reference path="./phaser.d.ts"/>
 
 import "phaser";
+import { Entity } from "./objects/entity";
 import { BootScene } from "./scenes/BootScene";
 
 const config: GameConfig = {
