@@ -1,0 +1,28 @@
+{
+    "rooms": {
+        "emptyRoom": [
+            "XXXXX",
+            "XOOOX",
+            "XOOOX",
+            "XOOOX",
+            "XXXXX"
+        ],
+        "pillarRoom": [
+            "XXXXX",
+            "XOOOX",
+            "XOXOX",
+            "XOOOX",
+            "XXXXX"
+        ],
+        "largeRoom": [
+            "XXXXXXXXXX",
+            "XOOOOOOOOX",
+            "XOOOOOOOOX",
+            "XOOOOOOOOX",
+            "XOOOOOOOOX",
+            "XOOOOOOOOX",
+            "XOOOOOOOOX",
+            "XXXXXXXXXX"
+        ]
+    }
+}

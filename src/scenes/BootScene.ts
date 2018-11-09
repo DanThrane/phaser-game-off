@@ -1,5 +1,5 @@
 import { FOREVER, Physics } from "phaser";
-import { buildLayout } from "../DungeonGeneration";
+import DungeonGeneration from "../DungeonGeneration";
 
 const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
   "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up",
@@ -23,9 +23,8 @@ export class BootScene extends Phaser.Scene {
   private cursors: CursorKeys;
   private score: number = 0;
   private scoreText: Phaser.GameObjects.Text;
-  private dunGenOffsetX: number = 0;
-  private dunGenOffsetY: number = 200;
 
+  private dungeonGeneration: DungeonGeneration;
 
   preload() {
     this.load.image(Sprites.BOMB, "assets/bomb.png");
@@ -50,24 +49,10 @@ export class BootScene extends Phaser.Scene {
       .setScale(2)
       .refreshBody();
 
-    platforms.create(600, 368, Sprites.PLATFORM);
-    platforms.create(600, 400, Sprites.PLATFORM);
-    platforms.create(600, 432, Sprites.PLATFORM);
+    this.dungeonGeneration = new DungeonGeneration(this.physics);
+    this.dungeonGeneration.buildLayout();
 
-    platforms.create(50, 250, Sprites.PLATFORM);
-    platforms.create(50, 282, Sprites.PLATFORM);
-    platforms.create(50, 314, Sprites.PLATFORM);
-
-    platforms.create(750, 220, Sprites.PLATFORM);
-
-    this.platforms = platforms;
-    // Uncomment me out for generation
-    /* for (let i = 0; i < 4; i++) {
-      let { room, width, height } = buildLayout(this.dunGenOffsetX, this.dunGenOffsetY, this.physics);
-      this.dunGenOffsetX += width * BLOCK_SIZE - BLOCK_SIZE; // Final block should overlap with next
-      this.platforms.addMultiple(room)
-    } */
-
+    this.platforms.addMultiple(this.dungeonGeneration.buildLayout());
 
     let player = this.player = this.physics.add.sprite(100, 450, Sprites.DUDE);
     player

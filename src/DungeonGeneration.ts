@@ -1,55 +1,41 @@
 import { Sprites } from "./scenes/BootScene";
 import { Physics } from "phaser";
 
-const emptyRoom = [
-    "XXXXX",
-    "XOOOX",
-    "XOOOX",
-    "XOOOX",
-    "XXXXX"
-];
+import { rooms } from "../Rooms/Pillar.json"
 
-const pillarRoom = [
-    "XXXXX",
-    "XOOOX",
-    "XOXOX",
-    "XOOOX",
-    "XXXXX"
-];
+class DungeonGeneration {
+    constructor(physics: Physics.Arcade.ArcadePhysics) {
+        this.physics = physics;
+    }
 
-const largeRoom = [
-    "XXXXXXXXXX",
-    "XOOOOOOOOX",
-    "XOOOOOOOOX",
-    "XOOOOOOOOX",
-    "XOOOOOOOOX",
-    "XOOOOOOOOX",
-    "XOOOOOOOOX",
-    "XXXXXXXXXX"
-];
+    private physics: Physics.Arcade.ArcadePhysics;
+    private offsetX: number = 0;
+    private offsetY: number = 0;
+    private blockSize: number = 32;
 
-const layouts = [emptyRoom, pillarRoom, largeRoom];
+    private pickLayout = (): string[] => rooms[Object.keys(rooms)[(Math.random() * Object.keys(rooms).length) | 0]];
 
-const pickLayout = (): string[] => layouts[(Math.random() * layouts.length) | 0];
-
-interface BuildLayoutResult { room: Phaser.GameObjects.GameObject[], width: number, height: number }
-export function buildLayout(offsetX: number, offsetY: number, physics: Physics.Arcade.ArcadePhysics): BuildLayoutResult {
-    const blockSize = 32;
-    const selectedLayout = pickLayout();
-    const height = selectedLayout[0].length;
-    const width = selectedLayout.length;
-    let room = [];
-    // Create frame
-    for (let i = 0; i < width; i++) {
-        for (let j = 0; j < height; j++) {
-            switch (selectedLayout[i][j]) {
-                case "X":
-                    room.push(physics.add.staticSprite(offsetX + i * blockSize, offsetY + j * blockSize, Sprites.WALL));
-                    continue;
-                case "O":
-                    continue;
+    buildLayout(): Phaser.GameObjects.GameObject[] {
+        const selectedLayout = this.pickLayout();
+        const height = selectedLayout[0].length;
+        const width = selectedLayout.length;
+        let room = [];
+        // Create frame
+        for (let i = 0; i < width; i++) {
+            for (let j = 0; j < height; j++) {
+                switch (selectedLayout[i][j]) {
+                    case "X":
+                        room.push(this.physics.add.staticSprite(this.offsetX + i * this.blockSize, this.offsetY + j * this.blockSize, Sprites.WALL));
+                        continue;
+                    case "O":
+                        continue;
+                }
             }
         }
+        this.offsetX += (width - 1) * this.blockSize;
+        return room;
     }
-    return { room, width, height };
+
 }
+
+export default DungeonGeneration;

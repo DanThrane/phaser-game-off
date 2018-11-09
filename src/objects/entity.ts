@@ -1,3 +1,3 @@
-export class Entity extends Phaser.Sprite {
+export class Entity extends Phaser.Physics.Arcade.Sprite {
 
 }
