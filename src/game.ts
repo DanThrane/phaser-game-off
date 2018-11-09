@@ -2,15 +2,16 @@
 
 import "phaser";
 import { Entity } from "./objects/entity";
-import { BootScene } from "./scenes/BootScene";
+import { WorldScene } from "./scenes/world.scene";
+// import { BootScene } from "./scenes/BootScene";
 
 const config: GameConfig = {
   version: "0.1,0",
-  width: 1920,
-  height: 1080,
+  width: 800,
+  height: 600,
   type: Phaser.AUTO,
   parent: "game",
-  scene: [BootScene],
+  scene: [WorldScene],
   input: {
     keyboard: true,
     mouse: false,
@@ -21,11 +22,11 @@ const config: GameConfig = {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
-      debug: false
+      debug: true
     }
   },
   backgroundColor: "#000000",
-  pixelArt: false,
+  pixelArt: true,
   antialias: false
 };
 
