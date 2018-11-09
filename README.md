@@ -8,4 +8,4 @@ type `npm run dev` to run the development server on localhost.
 The development watches changes to the source code and reloads and refreshes the page upon file save.
 
 ### Plan
-See [game plan here](/proposals/gameplan/plan.md).
+See [game plan here](gameplan/plan.md).
