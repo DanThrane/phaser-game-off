@@ -1,7 +1,7 @@
 import { Sprites } from "./scenes/BootScene";
 import { Physics } from "phaser";
 
-import { rooms } from "../Rooms/Pillar.json"
+import { rooms } from "../Rooms/rooms.json"
 
 class DungeonGeneration {
     constructor(physics: Physics.Arcade.ArcadePhysics) {
@@ -13,17 +13,17 @@ class DungeonGeneration {
     private offsetY: number = 0;
     private blockSize: number = 32;
 
-    private pickLayout = (): string[] => rooms[Object.keys(rooms)[(Math.random() * Object.keys(rooms).length) | 0]];
+    private pickLayout = (): string[] => rooms["hugeRoom"];
 
     buildLayout(): Phaser.GameObjects.GameObject[] {
         const selectedLayout = this.pickLayout();
-        const height = selectedLayout[0].length;
-        const width = selectedLayout.length;
+        const width = selectedLayout[0].length;
+        const height = selectedLayout.length;
         let room = [];
         // Create frame
         for (let i = 0; i < width; i++) {
             for (let j = 0; j < height; j++) {
-                switch (selectedLayout[i][j]) {
+                switch (selectedLayout[j][i]) {
                     case "X":
                         room.push(this.physics.add.staticSprite(this.offsetX + i * this.blockSize, this.offsetY + j * this.blockSize, Sprites.WALL));
                         continue;

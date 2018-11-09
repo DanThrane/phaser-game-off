@@ -41,17 +41,11 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(400, 300, Sprites.SKY);
-
     let platforms = this.physics.add.staticGroup();
 
-    (platforms.create(400, 568, Sprites.PLATFORM) as Phaser.Physics.Arcade.Sprite)
-      .setScale(2)
-      .refreshBody();
-
     this.dungeonGeneration = new DungeonGeneration(this.physics);
-    this.dungeonGeneration.buildLayout();
 
+    this.platforms = platforms;
     this.platforms.addMultiple(this.dungeonGeneration.buildLayout());
 
     let player = this.player = this.physics.add.sprite(100, 450, Sprites.DUDE);
@@ -119,35 +113,25 @@ export class BootScene extends Phaser.Scene {
     const movementSpeed = 320;
 
     if (this.cursors.left.isDown) {
-      this.player.setAccelerationX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
+      this.player.setVelocityX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
     } else if (this.cursors.right.isDown) {
-      this.player.setAccelerationX(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
+      this.player.setVelocityX(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
       this.player.anims.play("right", true);
     } else {
-      this.player.body.acceleration.set(0);
+      this.player.body.setVelocityX(0);
+    }
+
+    if (this.cursors.up.isDown) {
+      this.player.setVelocityY(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
+      this.player.anims.play("left", true);
+    } else if (this.cursors.down.isDown) {
+      this.player.setVelocityY(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
+      this.player.anims.play("right", true);
+    } else {
+      this.player.body.setVelocityY(0);
       this.player.anims.play("turn");
     }
-
-    // Standard jump
-    if (this.cursors.up.isDown && this.player.body.touching.down) {
-      this.player.setVelocityY(-330);
-    }
-
-    // Wall jump, left
-    if (this.cursors.up.isDown && this.playerCanWallJump) {
-      if (this.player.body.touching.left) {
-        this.player.setVelocityX(300)
-        this.player.setVelocityY(-300);
-      }
-
-      // Wall jump, right
-      if (this.player.body.touching.right) {
-        this.player.setVelocityX(-300)
-        this.player.setVelocityY(-300);
-      }
-    }
-    this.playerCanWallJump = false;
   }
 }
 
