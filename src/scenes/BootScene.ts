@@ -1,12 +1,6 @@
-import { FOREVER, Physics } from "phaser";
+import { FOREVER } from "phaser";
 import DungeonGeneration from "../DungeonGeneration";
 
-const genres = ["rogue-like", "racing", "turn-based", "platformer", "tower defense", "last stand (Horde mode)",
-  "RPG", "JRPG (Overworld + turn-based combat)", "simulator", "sport", "strategy", "beat 'em up", "shoot 'em up",
-  "Dungeon Crawler"];
-const hybrid = `${genres[(Math.random() * genres.length) | 0]} + ${genres[Math.random() * genres.length | 0]}`
-
-const BLOCK_SIZE = 32;
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -49,12 +43,8 @@ export class BootScene extends Phaser.Scene {
     this.platforms.addMultiple(this.dungeonGeneration.buildLayout());
 
     let player = this.player = this.physics.add.sprite(100, 450, Sprites.DUDE);
-    player
-      .setBounce(0.2)
-      .setCollideWorldBounds(true)
-      .setMaxVelocity(400)
-      .setDrag(150);
-
+    player.setCollideWorldBounds(true);
+    this.physics.add.collider(player, platforms);
     this.cameras.main.startFollow(player, true);
 
     this.anims.create({
@@ -80,57 +70,47 @@ export class BootScene extends Phaser.Scene {
 
     this.cursors = this.input.keyboard.createCursorKeys();
 
-    let stars = this.stars = this.physics.add.group({
-      key: Sprites.STAR,
-      repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 }
-    });;
-
-    this.stars.children.iterate(child => {
-      child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8))
-    }, null);
-
-    this.physics.add.collider(player, platforms, () => this.playerCanWallJump = true);
-    this.physics.add.collider(stars, platforms);
-
-    this.physics.add.overlap(player, stars, (_, star: Physics.Arcade.Sprite) => {
-      star.disableBody(true, true);
-      this.score += 10;
-      this.scoreText.setText(`Score: ${this.score}`);
-    }, null, this);
-
     this.scoreText = this.add.text(16, 16, "Score: 0",
       { fontSize: "32px", fill: "#fff" }).setScrollFactor(0);
 
-    this.add.text(16, 48, hybrid,
-      { fontSize: "16px", fill: "#fff" }).setScrollFactor(0);
-
-    this.add.text(16, this.game.canvas.height - 32, "Move on arrow keys, wall jump by pressing up on contact",
+    this.add.text(16, this.game.canvas.height - 32, "Move on arrow keys",
       { fontSize: "16px", fill: "#fff" }).setScrollFactor(0);
   }
 
   update() {
     const movementSpeed = 320;
-
+    let animSet = false;
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
       this.player.anims.play("left", true);
+      animSet = true;
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
       this.player.anims.play("right", true);
+      animSet = true;
     } else {
       this.player.body.setVelocityX(0);
+      this.player.anims.play("turn", true);
     }
 
     if (this.cursors.up.isDown) {
       this.player.setVelocityY(-movementSpeed + (this.cursors.shift.isDown ? -80 : 0));
-      this.player.anims.play("left", true);
+      if (!animSet) {
+        this.player.anims.play("left", true);
+        animSet = true;
+      }
     } else if (this.cursors.down.isDown) {
       this.player.setVelocityY(movementSpeed + (this.cursors.shift.isDown ? 80 : 0));
-      this.player.anims.play("right", true);
+      if (!animSet) {
+        this.player.anims.play("right", true);
+        animSet = true;
+      }
     } else {
       this.player.body.setVelocityY(0);
-      this.player.anims.play("turn");
+      if (!animSet) {
+        this.player.anims.play("turn", true);
+        animSet = true;
+      }
     }
   }
 }
