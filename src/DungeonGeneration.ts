@@ -27,7 +27,7 @@ class DungeonGeneration {
                     case "X":
                         room.push(this.physics.add.staticSprite(this.offsetX + i * this.blockSize, this.offsetY + j * this.blockSize, Sprites.WALL));
                         continue;
-                    case "O":
+                    case " ":
                         continue;
                 }
             }
