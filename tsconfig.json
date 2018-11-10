@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "ES2017",
     "module": "CommonJs",
-	"resolveJsonModule": true,
-	"strict": true,
-	"noEmit": true
+    "resolveJsonModule": true,
+    "strict": true,
+    "noEmit": false
   },
   "exclude": [
-	  "node_modules"
+    "node_modules"
   ],
   "compileOnSave": true
 }
