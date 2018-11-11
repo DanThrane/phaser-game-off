@@ -1,5 +1,7 @@
 import { Player } from "../objects/player";
 import { WorldGenerator } from "../objects/worldGenerator";
+import { Entity } from "../objects/entity";
+import { Slime } from "../objects/slime";
 
 export class WorldScene extends Phaser.Scene {
 	private map?: Phaser.Tilemaps.Tilemap = undefined;
@@ -9,6 +11,7 @@ export class WorldScene extends Phaser.Scene {
 		height: 3200
 	};
 	private player!: Player;
+	private enemies: Entity[] = [];
 	
 	constructor() {
 	  super({
@@ -22,6 +25,12 @@ export class WorldScene extends Phaser.Scene {
 			"dude",
 			"assets/dude.png",
 			{ frameWidth: 32, frameHeight: 48 }
+		);
+
+		this.load.spritesheet(
+			"slime",
+			"assets/slime.png",
+			{ frameWidth: 32, frameHeight: 32 }
 		);
 	}
 
@@ -47,6 +56,9 @@ export class WorldScene extends Phaser.Scene {
 		this.player.x = this.map.tileToWorldX(0);
 		this.player.y = this.map.tileToWorldY(0);
 
+		let slime = new Slime(this, this.map.tileToWorldX(5), this.map.tileToWorldY(0), "slime")
+		this.enemies.push(slime);
+
 		// Scroll to the player		
 		let cam = this.cameras.main;
 		cam.startFollow(this.player);
@@ -54,5 +66,8 @@ export class WorldScene extends Phaser.Scene {
 
 	update(): void {
 		this.player.update();
+		this.enemies.forEach((enemy) => {
+			enemy.update();
+		});
 	}
 }

@@ -30,7 +30,7 @@ Elements that we want in the prototype:
  - [X] Level spec: read a level from a text file (tile based, right)
  - [ ] Basic objects: solid block (stone, wall, etc.) (Wall done)
  - [ ] At least 1 boss
- - [ ] At least 1 small (type of) enemy
+ - [Anders] At least 1 small (type of) enemy
  - [ ] Basic combat gameplay (attack with mouse click or whatever)
  - [ ] Basic graphics (go for very simple art or geometric objects in easy
    distinguishable colors)
