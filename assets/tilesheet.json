@@ -1,4 +1,4 @@
-{ "columns":16,
+{ "columns":8,
  "image":"tilesheet.png",
  "imageheight":256,
  "imagewidth":256,
@@ -7,8 +7,8 @@
  "spacing":0,
  "tilecount":256,
  "tiledversion":"1.2.0",
- "tileheight":16,
- "tilewidth":16,
+ "tileheight":32,
+ "tilewidth":32,
  "type":"tileset",
  "version":1.2
 }

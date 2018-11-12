@@ -32,8 +32,8 @@ export class WorldScene extends Phaser.Scene {
 		this.tileset = this.map.addTilesetImage("tiles");
 		const layer = this.map.createStaticLayer("Tile Layer 1", this.tileset, 0, 0);
 		
-		// Set collision for Tile items 2 - 2 (inclusive) 
-		this.map.setCollisionBetween(2, 2);
+		// Set collision for Tile items 2 - 3 (inclusive, wall and rock) 
+		this.map.setCollisionBetween(2, 3);
 
 		this.player = new Player(this, 0, 0, "dude");
 		this.player.x = this.map.tileToWorldX(0);
