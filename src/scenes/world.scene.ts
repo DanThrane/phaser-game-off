@@ -3,71 +3,74 @@ import { WorldGenerator } from "../objects/worldGenerator";
 import { Entity } from "../objects/entity";
 import { Slime } from "../objects/slime";
 
+
 export class WorldScene extends Phaser.Scene {
 	private map?: Phaser.Tilemaps.Tilemap = undefined;
 	private tileset?: Phaser.Tilemaps.Tileset = undefined;
 	private world = {
-		width: 3200,
+		width: 32000,
 		height: 3200
 	};
 	private player!: Player;
-	private enemies: Entity[] = [];
+	private entities: Entity[] = [];
 	
+
 	constructor() {
-	  super({
-		key: "WorldScene"
-	  });
+		super({
+			key: "WorldScene"
+		});
 	}
 
 	preload() {
 		this.load.image("tiles", "assets/tilesheet.png");
-		this.load.spritesheet(
-			"dude",
-			"assets/dude.png",
-			{ frameWidth: 32, frameHeight: 48 }
-		);
+		
+		this.load.tilemapTiledJSON("tiled-map", "assets/tiled-test.json");
 
 		this.load.spritesheet(
 			"slime",
 			"assets/slime.png",
 			{ frameWidth: 32, frameHeight: 32 }
 		);
+
+		this.load.spritesheet(
+			"dude",
+			"assets/dude.png",
+			{ frameWidth: 32, frameHeight: 48 }
+		);
 	}
 
 	create() {
 		// Setup tilemap
-		this.map = this.make.tilemap({
-			tileWidth: 16,
-			tileHeight: 16,
-			width: this.world.width,
-			height: this.world.height
-		});
-		this.tileset = this.map.addTilesetImage("tiles", "tiles", 16, 16);
-		let layer = this.map.createBlankDynamicLayer("layer 1", this.tileset, this.map.width, this.map.height, this.map.tileWidth, this.map.tileHeight);
+		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32});
+		this.tileset = this.map.addTilesetImage("tiles");
+		const layer = this.map.createStaticLayer("Tile Layer 1", this.tileset, 0, 0);
 		
-		let worldGen = new WorldGenerator(this.map, "hugeRoom", {
-			tileWidth: 16,
-			tileHeight: 16,
-		});
-		worldGen.buildLayout();
-		// layer.randomize(0, 0, this.map.width, this.map.height, [0, 1, 2]); // <- try this out instaead :)
+		// Set collision for Tile items 2 - 3 (inclusive, wall and rock) 
+		this.map.setCollisionBetween(2, 3);
 
-		this.player = new Player(this, 0, 0, "dude");
-		this.player.x = this.map.tileToWorldX(0);
-		this.player.y = this.map.tileToWorldY(0);
+		this.player = new Player(this, this.map.tileToWorldX(0), this.map.tileToWorldY(0), "dude");
+		let slime = new Slime(this, this.map.tileToWorldX(5), this.map.tileToWorldY(0), "slime");
+		this.entities.push(this.player);
+		this.entities.push(slime);
+		
+		// Add collider between collision tile items and player
+		this.physics.add.collider(layer, this.player)
+		this.physics.add.collider(this.player, this.entities)
+		this.physics.add.collider(layer, this.entities)
 
-		let slime = new Slime(this, this.map.tileToWorldX(5), this.map.tileToWorldY(0), "slime")
-		this.enemies.push(slime);
 
 		// Scroll to the player		
 		let cam = this.cameras.main;
 		cam.startFollow(this.player);
+
+		this.entities.forEach((entity) => {
+			entity.create()
+		})
 	}
 
 	update(): void {
-		this.player.update();
-		this.enemies.forEach((enemy) => {
-			enemy.update();
+		this.entities.forEach((entity) => {
+			entity.update();
 		});
 	}
 }
