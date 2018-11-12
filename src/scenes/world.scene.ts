@@ -9,6 +9,7 @@ export class WorldScene extends Phaser.Scene {
 		height: 3200
 	};
 	private player!: Player;
+	private entities!: Phaser.GameObjects.Group;
 
 	constructor() {
 		super({
@@ -36,11 +37,12 @@ export class WorldScene extends Phaser.Scene {
 		this.map.setCollisionBetween(2, 3);
 
 		this.player = new Player(this, 0, 0, "dude");
-		this.player.x = this.map.tileToWorldX(0);
-		this.player.y = this.map.tileToWorldY(0);
+		this.player.x = this.map.tileToWorldX(4);
+		this.player.y = this.map.tileToWorldY(4);
 
 		// Add collider between collision tile items and player
-		this.physics.add.collider(layer, this.player)
+		this.physics.add.collider(layer, this.player);
+		this.physics.add.collider(layer, this.entities);
 
 		// Scroll to the player		
 		let cam = this.cameras.main;
