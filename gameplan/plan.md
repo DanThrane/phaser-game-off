@@ -27,7 +27,7 @@ Elements that we want in the prototype:
 
  - [X] Top down sandbox world (camera follows player) (Already done in
    current code. Otherwise `this.cameras.main.startFollow(player, true);`)
- - [X] Level spec: read a level from a text file (tile based, right)
+ - [Jonas] Level spec: read a level from a text file (tile based, right)
  - [ ] Basic objects: solid block (stone, wall, etc.) (Wall done)
  - [ ] At least 1 boss
  - [ ] At least 1 small (type of) enemy
