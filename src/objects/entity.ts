@@ -5,4 +5,8 @@ export class Entity extends Phaser.Physics.Arcade.Sprite {
 
 		this.scene.add.existing(this);
 	}
+
+	create() {}
+
+	update() {}
 }
