@@ -50,7 +50,7 @@ export class WorldScene extends Phaser.Scene {
 		this.map.setCollisionBetween(2, 3);
 
 		this.player = new Player(this, this.map.tileToWorldX(4), this.map.tileToWorldY(4), "dude");
-		let slime = new Slime(this, this.map.tileToWorldX(5), this.map.tileToWorldY(5), "slime");
+		let slime = new Slime(this.player, this, this.map.tileToWorldX(10), this.map.tileToWorldY(8), "slime");
 		this.entities.push(this.player);
 		this.entities.push(slime);
 		
