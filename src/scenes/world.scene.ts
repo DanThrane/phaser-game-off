@@ -14,7 +14,9 @@ export class WorldScene extends Phaser.Scene {
 	};
 	private player!: Player;
 	private entities: Entity[] = [];
-	
+	private bullets!: Phaser.Physics.Arcade.Group;
+	private nextAllowedAttack: number = 0;
+
 
 	constructor() {
 		super({
@@ -24,7 +26,7 @@ export class WorldScene extends Phaser.Scene {
 
 	preload(): void {
 		this.load.image("tiles", "assets/tilesheet.png");
-		
+
 		this.load.tilemapTiledJSON("tiled-map", "assets/tiled-test.json");
 
 		this.load.spritesheet(
@@ -38,29 +40,61 @@ export class WorldScene extends Phaser.Scene {
 			"assets/dude.png",
 			{ frameWidth: 32, frameHeight: 48 }
 		);
+
+		this.load.image("bullet", "assets/star.png");
+		this.bullets = this.physics.add.group({
+			defaultKey: "bullet",
+			maxSize: 50
+		})
+		this.input.on('pointerdown', this.shoot, this);
+	}
+
+	shoot(pointer: Phaser.Input.Pointer) {
+		// Hvor henter man delta time for sprites?
+		const now = new Date().getTime();
+		if (now > this.nextAllowedAttack) {
+			// Logic for shooting here
+			const relativeX = pointer.x - this.player.x;
+			const relativeY = pointer.y - this.player.y;
+			const hypothenuse = Math.sqrt(relativeX ** 2 + relativeY ** 2);
+			let normalizedX = relativeX / hypothenuse;
+			let normalizedY = relativeY / hypothenuse;
+			const bullet = this.bullets.get(this.player.x, this.player.y);
+			if (bullet) {
+				console.log(this.player.x, this.player.y)
+				bullet.setActive(true);
+				bullet.setVisible(true);
+				bullet.body.x = this.player.x;
+				bullet.body.y = this.player.y;
+				bullet.body.velocity.y = normalizedY * 1024;
+				bullet.body.velocity.x = normalizedX * 1024;
+			}
+			this.nextAllowedAttack = now + 300;
+		}
+
 	}
 
 	create(): void {
 		this.setupAnimations()
 
 		// Setup tilemap
-		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32});
+		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32 });
 		this.tileset = this.map.addTilesetImage("tiles");
 		this.entities = []
 		const layer = this.map.createStaticLayer("Tile Layer 1", this.tileset, 0, 0);
-		
+
 		// Set collision for Tile items 2 - 3 (inclusive, wall and rock) 
 		this.map.setCollisionBetween(2, 3);
 
 		this.player = new Player(this, this.map.tileToWorldX(4), this.map.tileToWorldY(4), "dude");
-		
+
 		this.entities.push(this.player);
 		this.entities.push(
 			new Slime(this.player, this, this.map.tileToWorldX(10), this.map.tileToWorldY(8), "slime"),
 			new Slime(this.player, this, this.map.tileToWorldX(8), this.map.tileToWorldY(12), "slime"),
 			new Slime(this.player, this, this.map.tileToWorldX(14), this.map.tileToWorldY(16), "slime"),
 		);
-		
+
 		// Add collider between collision tile items and player
 		this.physics.add.collider(layer, this.player)
 		this.physics.add.collider(this.player, this.entities)
@@ -76,6 +110,14 @@ export class WorldScene extends Phaser.Scene {
 
 	update(): void {
 		this.entities.forEach(enemy => enemy.update());
+
+		// Cleanup;
+
+		this.bullets.children.each(it => {
+			if (it.active && (Phaser.Math.Distance.Between(this.player.x, this.player.y, it.x, it.y) > 2000)) {
+				it.setActive(false);
+			}
+		}, this)
 	}
 
 	setupAnimations(): void {
@@ -89,7 +131,7 @@ export class WorldScene extends Phaser.Scene {
 			}),
 			repeat: FOREVER
 		});
-		
+
 		this.anims.create({
 			key: "standing",
 			frameRate: 8,

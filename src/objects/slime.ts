@@ -30,7 +30,6 @@ export class Slime extends Entity {
 	}
 	
 	create() {
-
 		this.anims.load("crawling");
 		this.anims.load("standing");
 		this.anims.load("throw");
