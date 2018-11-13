@@ -54,14 +54,13 @@ export class WorldScene extends Phaser.Scene {
 		const now = new Date().getTime();
 		if (now > this.nextAllowedAttack) {
 			// Logic for shooting here
-			const relativeX = pointer.x - this.player.x;
-			const relativeY = pointer.y - this.player.y;
+			const relativeX = pointer.worldX - this.player.x;
+			const relativeY = pointer.worldY - this.player.y;
 			const hypothenuse = Math.sqrt(relativeX ** 2 + relativeY ** 2);
 			let normalizedX = relativeX / hypothenuse;
 			let normalizedY = relativeY / hypothenuse;
 			const bullet = this.bullets.get(this.player.x, this.player.y);
 			if (bullet) {
-				console.log(this.player.x, this.player.y)
 				bullet.setActive(true);
 				bullet.setVisible(true);
 				bullet.body.x = this.player.x;
