@@ -1,28 +1,39 @@
-import { Entity } from "./entity";
+import { Entity, IEntityStats } from "./entity";
 
 
-export interface AIMovementParameters {
+interface IAIMovementParameters {
 	movementSpeed: number,
 	detectionRadius: number,
 	reach: number
+}
+
+interface IExternalReferences {
+	player: Entity,
+	map: Phaser.Tilemaps.Tilemap
 }
 
 export class Slime extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
  
 	constructor(
-		private playerRef: Entity,
+		private externalRefs: IExternalReferences,
 		scene: Phaser.Scene,
 		x: number, y: number,
 		texture: string,
 		frame?: string | number,
-		public movementParameters: AIMovementParameters = {
+		stats: IEntityStats = {
+			health: 80,
+			mana: 20,
+			atk: 3,
+			def: 1
+		},
+		public movementParameters: IAIMovementParameters = {
 			movementSpeed: 21,
-			detectionRadius: 225,
-			reach: 12
+			detectionRadius: 500,
+			reach: 180
 		}
 	) {
-		super(scene, x, y, texture, frame);
+		super(scene, x, y, texture, stats, frame);
 
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
@@ -39,7 +50,7 @@ export class Slime extends Entity {
 		
 		// chase - no real path finding
 		let me = this.getCenter() // this should be the center of the body instead or the player bounding circle should fit better the sprite
-		let playerDist = this.playerRef.getCenter()
+		let playerDist = this.externalRefs.player.getCenter()
 		let distanceToPlayer = me.distance(playerDist);
 
 		if (distanceToPlayer <= this.movementParameters.detectionRadius && 

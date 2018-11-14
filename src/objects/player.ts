@@ -1,4 +1,4 @@
-import { Entity } from "./entity";
+import { Entity, IEntityStats } from "./entity";
 
 type WASDkeys = {
 	w: Phaser.Input.Keyboard.Key
@@ -15,8 +15,19 @@ export class Player extends Entity {
 
 	public movementSpeed = 320;
 
-	constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number) {
-		super(scene, x, y, texture, frame);
+	constructor(
+		scene: Phaser.Scene,
+		x: number, y: number,
+		texture: string,
+		stats: IEntityStats = {
+			health: 200,
+			mana: 100,
+			atk: 10,
+			def: 5
+		},
+		frame?: string | number
+	) {
+		super(scene, x, y, texture, stats, frame);
 		this.cursors = this.scene.input.keyboard.createCursorKeys();
 		this.wasd = this.scene.input.keyboard.addKeys("w,a,s,d");
 		// TODO We had a previous check for cursors == undefined. I removed

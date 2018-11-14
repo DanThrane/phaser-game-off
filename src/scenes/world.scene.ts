@@ -91,11 +91,12 @@ export class WorldScene extends Phaser.Scene {
 
 		this.player = new Player(this, this.map.tileToWorldX(4), this.map.tileToWorldY(4), "dude");
 
+		let refs = {player: this.player, map: this.map};
 		this.entities.push(this.player);
 		this.entities.push(
-			new Slime(this.player, this, this.map.tileToWorldX(10), this.map.tileToWorldY(8), "slime"),
-			new Slime(this.player, this, this.map.tileToWorldX(8), this.map.tileToWorldY(12), "slime"),
-			new Slime(this.player, this, this.map.tileToWorldX(14), this.map.tileToWorldY(16), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(12), this.map.tileToWorldY(9), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(9), this.map.tileToWorldY(13), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(16), this.map.tileToWorldY(17), "slime"),
 		);
 
 		// Add collider between collision tile items and player
