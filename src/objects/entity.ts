@@ -28,5 +28,11 @@ export class Entity extends Phaser.Physics.Arcade.Sprite {
 
 	public update() {}
 
-	public isDead() { return false; }
+	public get isDead() {
+		return this.stats.health <= 0;
+	}
+
+	public damagedByOtherEntity(other: Entity) {
+		this.stats.health -= Math.abs(other.stats.atk - this.stats.def);
+	}
 }

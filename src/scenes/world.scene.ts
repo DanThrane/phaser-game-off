@@ -13,7 +13,7 @@ export class WorldScene extends Phaser.Scene {
 		height: 3200
 	};
 	private player!: Player;
-	private entities: Entity[] = [];
+	private enemyGroup!: Phaser.GameObjects.Group;
 	private bullets!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
 	private mouseDown = false;
@@ -49,8 +49,6 @@ export class WorldScene extends Phaser.Scene {
 		});
 		this.input.on('pointerdown', () => this.mouseDown = true, this);
 		this.input.on('pointerup', () => this.mouseDown = false, this);
-
-		//this.game.canvas.addEventListener('mousedown', () => this.game.input.mouse.requestPointerLock());
 	}
 
 	shoot(pointer: Phaser.Input.Pointer) {
@@ -83,7 +81,6 @@ export class WorldScene extends Phaser.Scene {
 		// Setup tilemap
 		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32 });
 		this.tileset = this.map.addTilesetImage("tiles");
-		this.entities = []
 		const layer = this.map.createStaticLayer("Tile Layer 1", this.tileset, 0, 0);
 
 		// Set collision for Tile items 2 - 3 (inclusive, wall and rock) 
@@ -91,32 +88,50 @@ export class WorldScene extends Phaser.Scene {
 
 		this.player = new Player(this, this.map.tileToWorldX(4), this.map.tileToWorldY(4), "dude");
 
-		let refs = {player: this.player, map: this.map};
-		this.entities.push(this.player);
-		this.entities.push(
-			new Slime(refs, this, this.map.tileToWorldX(12), this.map.tileToWorldY(9), "slime"),
-			new Slime(refs, this, this.map.tileToWorldX(9), this.map.tileToWorldY(13), "slime"),
-			new Slime(refs, this, this.map.tileToWorldX(16), this.map.tileToWorldY(17), "slime"),
-		);
+		this.enemyGroup = this.add.group([], {
+			runChildUpdate: true,
+			active: true
+		})
+
+		let refs = {
+			player: this.player,
+			map: this.map,
+			myGroup: this.enemyGroup
+		};
+
+		this.enemyGroup.addMultiple([
+			new Slime(refs, this, this.map.tileToWorldX(14), this.map.tileToWorldY(10), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(10), this.map.tileToWorldY(15), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(17), this.map.tileToWorldY(18), "slime")
+		])
 
 		// Add collider between collision tile items and player
 		this.physics.add.collider(layer, this.player)
-		this.physics.add.collider(this.player, this.entities)
-		this.physics.add.collider(layer, this.entities)
+		let col = this.physics.add.collider(this.player, this.enemyGroup)
+		this.physics.add.collider(layer, this.enemyGroup)
 
+		// shot overlaps with enemy => damage it
+		this.physics.add.overlap(this.bullets, this.enemyGroup, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+			let entitySlime = slime as Entity;
+			entitySlime.damagedByOtherEntity(this.player)
+			if (entitySlime.isDead) {
+				// it has been deaded
+				slime.emit('death');
+			}
+		});
 
 		// Scroll to the player		
 		let cam = this.cameras.main;
 		cam.startFollow(this.player);
 
-		this.entities.forEach(entity => entity.create());
+		this.player.create()
+		this.enemyGroup.children.each((s: Entity, i: number) => s.create(), this)
 	}
 
 	update(): void {
-		this.entities.forEach(enemy => enemy.update());
+		this.player.update()
 
 		// Cleanup;
-
 		this.bullets.children.each(it => {
 			if (it.active && (Phaser.Math.Distance.Between(this.player.x, this.player.y, it.x, it.y) > 2000)) {
 				it.setActive(false);

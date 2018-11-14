@@ -9,7 +9,8 @@ interface IAIMovementParameters {
 
 interface IExternalReferences {
 	player: Entity,
-	map: Phaser.Tilemaps.Tilemap
+	map: Phaser.Tilemaps.Tilemap,
+	myGroup: Phaser.GameObjects.Group
 }
 
 export class Slime extends Entity {
@@ -44,10 +45,11 @@ export class Slime extends Entity {
 		this.anims.load("crawling");
 		this.anims.load("standing");
 		this.anims.load("throw");
+		this.setupEvents()
 	}
 
 	update() {
-		
+
 		// chase - no real path finding
 		let me = this.getCenter() // this should be the center of the body instead or the player bounding circle should fit better the sprite
 		let playerDist = this.externalRefs.player.getCenter()
@@ -71,5 +73,14 @@ export class Slime extends Entity {
 			this.anims.play("standing", true)
 			this.setVelocity(0, 0)
 		}
+	}
+
+	private setupEvents() {
+		this.once('death', () => {
+			// I am deaded
+			this.phBody.enable = false
+			this.externalRefs.myGroup.kill(this)
+			this.setVelocity(0,0);
+		});
 	}
 }
