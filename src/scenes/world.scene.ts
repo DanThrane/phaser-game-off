@@ -16,6 +16,7 @@ export class WorldScene extends Phaser.Scene {
 	private entities: Entity[] = [];
 	private bullets!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
+	private mouseDown = false;
 
 
 	constructor() {
@@ -45,12 +46,15 @@ export class WorldScene extends Phaser.Scene {
 		this.bullets = this.physics.add.group({
 			defaultKey: "bullet",
 			maxSize: 50
-		})
-		this.input.on('pointerdown', this.shoot, this);
+		});
+		this.input.on('pointerdown', () => this.mouseDown = true, this);
+		this.input.on('pointerup', () => this.mouseDown = false, this);
+
+		//this.game.canvas.addEventListener('mousedown', () => this.game.input.mouse.requestPointerLock());
 	}
 
 	shoot(pointer: Phaser.Input.Pointer) {
-		// Hvor henter man delta time for sprites?
+		//this.input.mouse.requestPointerLock();
 		const now = new Date().getTime();
 		if (now > this.nextAllowedAttack) {
 			// Logic for shooting here
@@ -68,7 +72,7 @@ export class WorldScene extends Phaser.Scene {
 				bullet.body.velocity.y = normalizedY * 1024;
 				bullet.body.velocity.x = normalizedX * 1024;
 			}
-			this.nextAllowedAttack = now + 300;
+			this.nextAllowedAttack = now + 150;
 		}
 
 	}
@@ -117,6 +121,10 @@ export class WorldScene extends Phaser.Scene {
 				it.setActive(false);
 			}
 		}, this)
+
+		if (this.mouseDown) {
+			this.shoot(this.input.activePointer)
+		}
 	}
 
 	setupAnimations(): void {
