@@ -4,7 +4,8 @@
     "module": "CommonJs",
     "resolveJsonModule": true,
     "strict": true,
-    "noEmit": false
+    "noEmit": false,
+    "outDir": "build"
   },
   "exclude": [
     "node_modules"
