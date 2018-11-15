@@ -15,6 +15,7 @@ interface IExternalReferences {
 
 export class Slime extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
+	private nextAllowedAttack: number = 0;
  
 	constructor(
 		private externalRefs: IExternalReferences,
@@ -29,7 +30,7 @@ export class Slime extends Entity {
 			def: 1
 		},
 		public movementParameters: IAIMovementParameters = {
-			movementSpeed: 21,
+			movementSpeed: 30,
 			detectionRadius: 500,
 			reach: 180
 		}
@@ -50,13 +51,18 @@ export class Slime extends Entity {
 
 	update() {
 
-		// chase - no real path finding
+		// chase - no real path finding does not check visiblity too
 		let me = this.getCenter() // this should be the center of the body instead or the player bounding circle should fit better the sprite
 		let playerDist = this.externalRefs.player.getCenter()
 		let distanceToPlayer = me.distance(playerDist);
 
-		if (distanceToPlayer <= this.movementParameters.detectionRadius && 
-			distanceToPlayer > this.width + this.movementParameters.reach) {
+		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
+
+		if (
+			!this.externalRefs.player.isDead &&
+			distanceToPlayer <= this.movementParameters.detectionRadius && 
+			distanceToPlayer > this.width + this.movementParameters.reach
+		) {
 			this.anims.play("crawling", true)
 			let pointer = playerDist.subtract(me).normalize();
 			
@@ -69,6 +75,16 @@ export class Slime extends Entity {
 			let movementVec = pointer.scale(this.movementParameters.movementSpeed);
 
 			this.setVelocity(movementVec.x, movementVec.y);
+		} else if (!this.externalRefs.player.isDead && canReachPlayer) {
+			this.anims.play("throw", true)
+			this.setVelocity(0, 0);
+
+			const now = new Date().getTime();
+			if (now > this.nextAllowedAttack) {
+				this.emit('pew');
+				this.nextAllowedAttack = now + 250;
+			}
+
 		} else {
 			this.anims.play("standing", true)
 			this.setVelocity(0, 0)

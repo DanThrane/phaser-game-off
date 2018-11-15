@@ -15,8 +15,8 @@ export class WorldScene extends Phaser.Scene {
 	private player!: Player;
 	private enemyGroup!: Phaser.GameObjects.Group;
 	private bullets!: Phaser.Physics.Arcade.Group;
+	private slimePew!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
-	private mouseDown = false;
 
 
 	constructor() {
@@ -47,8 +47,11 @@ export class WorldScene extends Phaser.Scene {
 			defaultKey: "bullet",
 			maxSize: 50
 		});
-		this.input.on('pointerdown', () => this.mouseDown = true, this);
-		this.input.on('pointerup', () => this.mouseDown = false, this);
+
+		this.load.image("bomb", "assets/bomb.png");
+		this.slimePew = this.physics.add.group({
+			defaultKey: "bomb"
+		});
 	}
 
 	shoot(pointer: Phaser.Input.Pointer) {
@@ -109,7 +112,7 @@ export class WorldScene extends Phaser.Scene {
 
 		// Add collider between collision tile items and player
 		this.physics.add.collider(layer, this.player)
-		let col = this.physics.add.collider(this.player, this.enemyGroup)
+		this.physics.add.collider(this.player, this.enemyGroup)
 		this.physics.add.collider(layer, this.enemyGroup)
 
 		// shot overlaps with enemy => damage it
@@ -120,14 +123,47 @@ export class WorldScene extends Phaser.Scene {
 				// it has been deaded
 				slime.emit('death');
 			}
+			shot.destroy() // shot is consumed by damaged
 		});
+
+		this.physics.add.overlap(this.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+			let entity = plaeyr as Entity;
+			let randomSlime = this.enemyGroup.children.entries[0] as Entity; // stupied way of getting the attack stats... maybe the stats should be place more statically
+			entity.damagedByOtherEntity(randomSlime);
+
+			this.cameras.main.shake(600, 0.004) // feel the pain!
+			
+			if (entity.isDead) {
+				// it has been deaded
+				entity.emit('death');
+			}
+			shot.destroy() // shot is consumed by damaged
+		});
+
 
 		// Scroll to the player		
 		let cam = this.cameras.main;
 		cam.startFollow(this.player);
 
 		this.player.create()
-		this.enemyGroup.children.each((s: Entity, i: number) => s.create(), this)
+		this.enemyGroup.children.each((s: Entity, i: number) => {
+			s.create() 
+			s.on('pew', () => {
+				let pew = this.slimePew.get(s.x, s.y);
+				if (pew) {
+					pew.setActive(true);
+					pew.setVisible(true);
+					pew.body.x = s.x;
+					pew.body.y = s.y;
+
+					let pointerToPlayer = this.player.getCenter().subtract(s.getCenter()).normalize();
+					let speedAdded = pointerToPlayer.scale(300);
+					pew.body.velocity.x = speedAdded.x;
+					pew.body.velocity.y = speedAdded.y;
+				}
+			}, this)
+		
+		}, this)
 	}
 
 	update(): void {
@@ -140,7 +176,7 @@ export class WorldScene extends Phaser.Scene {
 			}
 		}, this)
 
-		if (this.mouseDown) {
+		if (this.input.activePointer.primaryDown) {
 			this.shoot(this.input.activePointer)
 		}
 	}
