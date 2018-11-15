@@ -56,19 +56,21 @@ export class WorldScene extends Phaser.Scene {
 		const now = new Date().getTime();
 		if (now > this.nextAllowedAttack) {
 			// Logic for shooting here
-			const relativeX = pointer.worldX - this.player.x;
-			const relativeY = pointer.worldY - this.player.y;
-			const hypothenuse = Math.sqrt(relativeX ** 2 + relativeY ** 2);
-			let normalizedX = relativeX / hypothenuse;
-			let normalizedY = relativeY / hypothenuse;
+
+			let pointerInCameraSpace = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+			let relativePos = pointerInCameraSpace.subtract(this.player.getCenter());
+			const pointerToPos = relativePos.normalize();
+			
 			const bullet = this.bullets.get(this.player.x, this.player.y);
 			if (bullet) {
 				bullet.setActive(true);
 				bullet.setVisible(true);
 				bullet.body.x = this.player.x;
 				bullet.body.y = this.player.y;
-				bullet.body.velocity.y = normalizedY * 1024;
-				bullet.body.velocity.x = normalizedX * 1024;
+
+				let scaled = pointerToPos.scale(1024)
+				bullet.body.velocity.y = scaled.y;
+				bullet.body.velocity.x = scaled.x;
 			}
 			this.nextAllowedAttack = now + 150;
 		}
