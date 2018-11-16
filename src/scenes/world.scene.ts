@@ -134,6 +134,10 @@ export class WorldScene extends Phaser.Scene {
 			bullet.destroy();
 		});
 
+		this.physics.add.collider(layer, this.slimePew, (shot: Phaser.GameObjects.GameObject) => {
+			shot.destroy();
+		})
+
 		this.physics.add.overlap(this.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
 			let entity = plaeyr as Entity;
 			let randomSlime = this.enemyGroup.children.entries[0] as Entity; // stupied way of getting the attack stats... maybe the stats should be place more statically
