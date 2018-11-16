@@ -107,7 +107,11 @@ export class WorldScene extends Phaser.Scene {
 		this.enemyGroup.addMultiple([
 			new Slime(refs, this, this.map.tileToWorldX(14), this.map.tileToWorldY(10), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(10), this.map.tileToWorldY(15), "slime"),
-			new Slime(refs, this, this.map.tileToWorldX(17), this.map.tileToWorldY(18), "slime")
+			new Slime(refs, this, this.map.tileToWorldX(17), this.map.tileToWorldY(18), "slime"),
+			
+			new Slime(refs, this, this.map.tileToWorldX(44), this.map.tileToWorldY(41), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(30), this.map.tileToWorldY(34), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(37), this.map.tileToWorldY(54), "slime")
 		])
 
 		// Add collider between collision tile items and player
@@ -124,6 +128,10 @@ export class WorldScene extends Phaser.Scene {
 				slime.emit('death');
 			}
 			shot.destroy() // shot is consumed by damaged
+		});
+
+		this.physics.add.collider(this.bullets, layer, (bullet: Phaser.GameObjects.GameObject, wall: Phaser.GameObjects.GameObject,) => {
+			bullet.destroy();
 		});
 
 		this.physics.add.overlap(this.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
@@ -146,17 +154,17 @@ export class WorldScene extends Phaser.Scene {
 		cam.startFollow(this.player);
 
 		this.player.create()
-		this.enemyGroup.children.each((s: Entity, i: number) => {
-			s.create() 
-			s.on('pew', () => {
-				let pew = this.slimePew.get(s.x, s.y);
+		this.enemyGroup.children.each((slime: Entity) => {
+			slime.create() 
+			slime.on('pew', () => {
+				let pew = this.slimePew.get(slime.x, slime.y);
 				if (pew) {
 					pew.setActive(true);
 					pew.setVisible(true);
-					pew.body.x = s.x;
-					pew.body.y = s.y;
+					pew.body.x = slime.x;
+					pew.body.y = slime.y;
 
-					let pointerToPlayer = this.player.getCenter().subtract(s.getCenter()).normalize();
+					let pointerToPlayer = this.player.getCenter().subtract(slime.getCenter()).normalize();
 					let speedAdded = pointerToPlayer.scale(300);
 					pew.body.velocity.x = speedAdded.x;
 					pew.body.velocity.y = speedAdded.y;

@@ -13,10 +13,17 @@ interface IExternalReferences {
 	myGroup: Phaser.GameObjects.Group
 }
 
+const enum States {
+	IDLE = "idle",
+	DEATH = "death",
+	WALKING_TOWARD_PLAYER = "walkingTowardsPlayer",
+	SHOOT_AT_PLAYER	= "shootAtPlayer"
+}
+
 export class Slime extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	private nextAllowedAttack: number = 0;
- 
+
 	constructor(
 		private externalRefs: IExternalReferences,
 		scene: Phaser.Scene,
@@ -51,31 +58,38 @@ export class Slime extends Entity {
 
 	update(time: number, dt: number) {
 
-		// chase - no real path finding does not check visiblity too
+		// chase - no real path finding
 		let playerPosition = this.externalRefs.player.getCenter()
 		let distanceToPlayer = this.getCenter().distance(playerPosition);
 
 		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
-		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius
+		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
 
-		if ( isPlayerWithinDetectionRadius && !canReachPlayer ) {
-			this.emit("walkingTowardsPlayer");
-		} else if (canReachPlayer) {
-			this.emit("shootAtPlayer", time);
+		let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
+
+		let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
+			isColliding: true,
+			isNotEmpty: true
+		}, this.scene.cameras.main);
+
+		if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
+			this.emit(States.WALKING_TOWARD_PLAYER);
+		} else if (canReachPlayer && tilesInTheWay.length === 0 ) {
+			this.emit(States.SHOOT_AT_PLAYER, time);
 		} else {
-			this.emit("idle")
+			this.emit(States.IDLE)
 		}
 	}
 
 	private setupEvents() {
-		this.once("death", () => {
+		this.once(States.DEATH, () => {
 			// I am deaded
 			this.phBody.enable = false
 			this.externalRefs.myGroup.kill(this)
 			this.setVelocity(0,0);
 		});
 
-		this.on("walkingTowardsPlayer", () => {
+		this.on(States.WALKING_TOWARD_PLAYER, () => {
 			this.anims.play("crawling", true)
 			let playerPos = this.externalRefs.player.getCenter()
 			let pointer = playerPos.subtract(this.getCenter()).normalize();
@@ -90,7 +104,7 @@ export class Slime extends Entity {
 			this.setVelocity(movementVec.x, movementVec.y);
 		});
 
-		this.on("shootAtPlayer", (time?: number) => {
+		this.on(States.SHOOT_AT_PLAYER, (time?: number) => {
 			if (time) {
 				this.anims.play("throw", true)
 				this.setVelocity(0, 0);
@@ -102,7 +116,7 @@ export class Slime extends Entity {
 			}
 		});
 
-		this.on("idle", () => {
+		this.on(States.IDLE, () => {
 			this.anims.play("standing", true)
 			this.setVelocity(0, 0)
 		});

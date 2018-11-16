@@ -26,8 +26,6 @@ export class Entity extends Phaser.Physics.Arcade.Sprite {
 
 	public create() {}
 
-	public update() {}
-
 	public get isDead() {
 		return this.stats.health <= 0;
 	}
