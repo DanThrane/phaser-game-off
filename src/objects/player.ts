@@ -41,9 +41,13 @@ export class Player extends Entity {
 	}
 
 	create() {
-		this.once('death', () => {
+		this.once("death", () => {
 			this.phBody.enable = false // freaze, mothafooka!
-			this.scene.cameras.main.fadeOut(3000, 255, 0, 0)
+			this.scene.cameras.main.fadeOut(3000, 0, 0, 0, () => {
+				if (this.scene.cameras.main.zoom <= 6) {
+					this.scene.cameras.main.zoom += 0.01;
+				}
+			});
 		})
 	}
 

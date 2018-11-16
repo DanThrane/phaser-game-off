@@ -49,22 +49,36 @@ export class Slime extends Entity {
 		this.setupEvents()
 	}
 
-	update() {
+	update(time: number, dt: number) {
 
 		// chase - no real path finding does not check visiblity too
-		let me = this.getCenter() // this should be the center of the body instead or the player bounding circle should fit better the sprite
-		let playerDist = this.externalRefs.player.getCenter()
-		let distanceToPlayer = me.distance(playerDist);
+		let playerPosition = this.externalRefs.player.getCenter()
+		let distanceToPlayer = this.getCenter().distance(playerPosition);
 
 		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
+		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius
 
-		if (
-			!this.externalRefs.player.isDead &&
-			distanceToPlayer <= this.movementParameters.detectionRadius && 
-			distanceToPlayer > this.width + this.movementParameters.reach
-		) {
+		if ( isPlayerWithinDetectionRadius && !canReachPlayer ) {
+			this.emit("walkingTowardsPlayer");
+		} else if (canReachPlayer) {
+			this.emit("shootAtPlayer", time);
+		} else {
+			this.emit("idle")
+		}
+	}
+
+	private setupEvents() {
+		this.once("death", () => {
+			// I am deaded
+			this.phBody.enable = false
+			this.externalRefs.myGroup.kill(this)
+			this.setVelocity(0,0);
+		});
+
+		this.on("walkingTowardsPlayer", () => {
 			this.anims.play("crawling", true)
-			let pointer = playerDist.subtract(me).normalize();
+			let playerPos = this.externalRefs.player.getCenter()
+			let pointer = playerPos.subtract(this.getCenter()).normalize();
 			
 			if (pointer.x > 0) {
 				this.setFlipX(true)
@@ -73,30 +87,24 @@ export class Slime extends Entity {
 			}
 
 			let movementVec = pointer.scale(this.movementParameters.movementSpeed);
-
 			this.setVelocity(movementVec.x, movementVec.y);
-		} else if (!this.externalRefs.player.isDead && canReachPlayer) {
-			this.anims.play("throw", true)
-			this.setVelocity(0, 0);
+		});
 
-			const now = new Date().getTime();
-			if (now > this.nextAllowedAttack) {
-				this.emit('pew');
-				this.nextAllowedAttack = now + 250;
+		this.on("shootAtPlayer", (time?: number) => {
+			if (time) {
+				this.anims.play("throw", true)
+				this.setVelocity(0, 0);
+				
+				if (time > this.nextAllowedAttack) {
+					this.emit("pew");
+					this.nextAllowedAttack = time + 250;
+				}
 			}
+		});
 
-		} else {
+		this.on("idle", () => {
 			this.anims.play("standing", true)
 			this.setVelocity(0, 0)
-		}
-	}
-
-	private setupEvents() {
-		this.once('death', () => {
-			// I am deaded
-			this.phBody.enable = false
-			this.externalRefs.myGroup.kill(this)
-			this.setVelocity(0,0);
 		});
 	}
 }
