@@ -4877,6 +4877,37 @@ declare namespace Phaser {
                 constructor(x: number, y: number, width: number, height: number);
 
                 /**
+                 * The Camera alpha value. Setting this property impacts every single object that this Camera
+                 * renders. You can either set the property directly, i.e. via a Tween, to fade a Camera in or out,
+                 * or via the chainable setAlpha method instead.
+                 */
+                alpha: number;
+
+                /**
+                 * The alpha value starting from the bottom-left of the Game Object.
+                 * This value is interpolated from the corner to the center of the Game Object.
+                 */
+                alphaBottomLeft: number;
+
+                /**
+                 * The alpha value starting from the bottom-right of the Game Object.
+                 * This value is interpolated from the corner to the center of the Game Object.
+                 */
+                alphaBottomRight: number;
+
+                /**
+                 * The alpha value starting from the top-left of the Game Object.
+                 * This value is interpolated from the corner to the center of the Game Object.
+                 */
+                alphaTopLeft: number;
+
+                /**
+                 * The alpha value starting from the top-right of the Game Object.
+                 * This value is interpolated from the corner to the center of the Game Object.
+                 */
+                alphaTopRight: number;
+
+                /**
                  * A reference to the Scene this camera belongs to.
                  */
                 scene: Phaser.Scene;
@@ -5017,6 +5048,14 @@ declare namespace Phaser {
                  * Can also be set via `setFollowOffset` or as part of the `startFollow` call.
                  */
                 followOffset: Phaser.Math.Vector2;
+
+
+                /**
+                 * Set the Alpha level of this Camera. The alpha controls the opacity of the Camera as it renders.
+                 * Alpha values are provided as a float between 0, fully transparent, and 1, fully opaque.
+                 * @param value the alpha value
+                 */
+                setAlpha( value?: number ): Phaser.Cameras.Scene2D.Camera;
 
                 /**
                  * Scrolls the Camera so that it is looking at the center of the Camera Bounds (if previously enabled)
@@ -13448,8 +13487,10 @@ declare namespace Phaser {
 
             /**
              * To be overridden by custom GameObjects. Allows base objects to be used in a Pool.
+             * @param time The current timestamp.
+             * @param delta The delta time elapsed since the last frame.
              */
-            update(): void;
+            update(time: number, delta: number): void;
 
             /**
              * Returns a JSON representation of the Game Object.
