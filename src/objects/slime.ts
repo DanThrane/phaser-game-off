@@ -60,7 +60,50 @@ export class Slime extends Entity {
 		);
 	}
 	
-	create(): void {
+	public create(): void {
+		this.setupAnimations();
+
+		this.anims.load("crawling");
+		this.anims.load("standing");
+		this.anims.load("throw");
+		this.anims.load("death");
+
+		this.subscribeToEvents();
+	}
+
+	public get state() {
+		return this.currentState;
+	}
+
+	public update(time: number, dt: number): void {
+
+		// chase - no real path finding
+		let playerPosition = this.externalRefs.player.getCenter()
+		let distanceToPlayer = this.getCenter().distance(playerPosition);
+
+		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
+		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
+
+		let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
+
+		let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
+			isColliding: true,
+			isNotEmpty: true
+		}, this.scene.cameras.main);
+
+		let state = States.IDLE;
+
+		if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
+			state = States.WALKING_TOWARD_PLAYER;
+		} else if (canReachPlayer && tilesInTheWay.length === 0 ) {
+			state = States.SHOOT_AT_PLAYER;
+		}
+
+		this.currentState = state;
+		this.emit(state, time, dt);
+	}
+
+	private setupAnimations() {
 		const sceneAnims = this.scene.anims;
 
 		sceneAnims.create({
@@ -102,53 +145,11 @@ export class Slime extends Entity {
 			}),
 			repeat: FOREVER
 		});
-
-		this.anims.load("crawling");
-		this.anims.load("standing");
-		this.anims.load("throw");
-		this.anims.load("death");
-		this.setupEvents()
 	}
 
-	public get state() {
-		return this.currentState;
-	}
-
-	update(time: number, dt: number): void {
-
-		// chase - no real path finding
-		let playerPosition = this.externalRefs.player.getCenter()
-		let distanceToPlayer = this.getCenter().distance(playerPosition);
-
-		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
-		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
-
-		let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
-
-		let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
-			isColliding: true,
-			isNotEmpty: true
-		}, this.scene.cameras.main);
-
-		let state = States.IDLE;
-
-		if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
-			state = States.WALKING_TOWARD_PLAYER;
-		} else if (canReachPlayer && tilesInTheWay.length === 0 ) {
-			state = States.SHOOT_AT_PLAYER; 
-		}
-
-		this.currentState = state;
-		this.emit(state, time, dt);
-	}
-
-	public get state() {
-		return this.currentState;
-	}
-
-	private setupEvents() {
+	private subscribeToEvents() {
 		this.once(States.DEATH, () => {
-			// I am deaded
+			this.currentState = States.DEATH;
 			this.anims.play("death", true)
 			this.phBody.enable = false
 			this.externalRefs.myGroup.kill(this)
