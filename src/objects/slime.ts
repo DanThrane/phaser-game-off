@@ -50,6 +50,8 @@ export class Slime extends Entity {
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.setCircle(12, 4, 12);
+		
+		this.setDepth(1);
 	}
 
 
@@ -150,8 +152,8 @@ export class Slime extends Entity {
 			} else if ( canReachPlayer && tilesInTheWay.length === 0 ) {
 				state = States.SHOOT_AT_PLAYER;
 			}
-		} 
-		
+		}
+
 		this.currentState = state;
 		this.emit(state, time, dt);
 	}
@@ -165,6 +167,7 @@ export class Slime extends Entity {
 			this.once('animationcomplete', () => {
 				this.phBody.enable = false
 				this.externalRefs.myGroup.kill(this)
+				this.setDepth(0);
 			})			
 		});
 

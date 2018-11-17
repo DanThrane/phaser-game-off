@@ -40,7 +40,7 @@ export class Player extends Entity {
 		this.phBody.setCircle(16);
 	}
 
-	create() {
+	public create() {
 		this.once("death", () => {
 			this.phBody.enable = false // freaze, mothafooka!
 			this.scene.cameras.main.fadeOut(3000, 0, 0, 0, () => {
@@ -48,10 +48,11 @@ export class Player extends Entity {
 					this.scene.cameras.main.zoom += 0.01;
 				}
 			});
-		})
+		});
+		this.setDepth(1)
 	}
 
-	update() {
+	public update() {
 		this.handleInput();
 	}
 
