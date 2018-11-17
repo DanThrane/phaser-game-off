@@ -63,12 +63,6 @@ export class Slime extends Entity {
 	
 	public create(): void {
 		this.setupAnimations();
-
-		this.anims.load("crawling");
-		this.anims.load("standing");
-		this.anims.load("throw");
-		this.anims.load("death");
-
 		this.subscribeToEvents();
 	}
 
@@ -146,6 +140,11 @@ export class Slime extends Entity {
 			}),
 			repeat: FOREVER
 		});
+
+		this.anims.load("crawling");
+		this.anims.load("standing");
+		this.anims.load("throw");
+		this.anims.load("death");
 	}
 
 	private subscribeToEvents() {
