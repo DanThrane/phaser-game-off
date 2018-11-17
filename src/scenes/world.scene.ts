@@ -96,7 +96,8 @@ export class WorldScene extends Phaser.Scene {
 		let refs = {
 			player: this.player,
 			map: this.map,
-			myGroup: this.enemyGroup
+			myGroup: this.enemyGroup,
+			slimePew: this.slimePew
 		};
 
 		this.enemyGroup.addMultiple([
@@ -153,24 +154,7 @@ export class WorldScene extends Phaser.Scene {
 		cam.startFollow(this.player);
 
 		this.player.create()
-		this.enemyGroup.children.each((slime: Entity) => {
-			slime.create() 
-			slime.on('pew', () => {
-				let pew = this.slimePew.get(slime.x, slime.y);
-				if (pew) {
-					pew.setActive(true);
-					pew.setVisible(true);
-					pew.body.x = slime.x;
-					pew.body.y = slime.y;
-
-					let pointerToPlayer = this.player.getCenter().subtract(slime.getCenter()).normalize();
-					let speedAdded = pointerToPlayer.scale(300);
-					pew.body.velocity.x = speedAdded.x;
-					pew.body.velocity.y = speedAdded.y;
-				}
-			}, this)
-		
-		}, this)
+		this.enemyGroup.children.each((slime: Entity) => slime.create(), this)
 	}
 
 	update(): void {

@@ -11,7 +11,8 @@ interface IAIMovementParameters {
 interface IExternalReferences {
 	player: Entity,
 	map: Phaser.Tilemaps.Tilemap,
-	myGroup: Phaser.GameObjects.Group
+	myGroup: Phaser.GameObjects.Group,
+	slimePew: Phaser.GameObjects.Group
 }
 
 const enum States {
@@ -177,7 +178,18 @@ export class Slime extends Entity {
 				this.setVelocity(0, 0);
 				
 				if (time > this.nextAllowedAttack) {
-					this.emit("pew");
+					let pew = this.externalRefs.slimePew.get(this.x, this.y);
+					if (pew) {
+						pew.setActive(true);
+						pew.setVisible(true);
+						pew.body.x = this.x;
+						pew.body.y = this.y;
+
+						let pointerToPlayer = this.externalRefs.player.getCenter().subtract(this.getCenter()).normalize();
+						let speedAdded = pointerToPlayer.scale(300);
+						pew.body.velocity.x = speedAdded.x;
+						pew.body.velocity.y = speedAdded.y;
+					}
 					this.nextAllowedAttack = time + 250;
 				}
 			}
