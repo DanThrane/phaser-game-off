@@ -110,6 +110,10 @@ export class Slime extends Entity {
 		this.setupEvents()
 	}
 
+	public get state() {
+		return this.currentState;
+	}
+
 	update(time: number, dt: number): void {
 
 		// chase - no real path finding
