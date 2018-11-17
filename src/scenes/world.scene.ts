@@ -30,11 +30,7 @@ export class WorldScene extends Phaser.Scene {
 
 		this.load.tilemapTiledJSON("tiled-map", "assets/tiled-test.json");
 
-		this.load.spritesheet(
-			"slime",
-			"assets/slime.png",
-			{ frameWidth: 32, frameHeight: 32 }
-		);
+		Slime.preload(this);
 
 		this.load.spritesheet(
 			"dude",
@@ -81,7 +77,6 @@ export class WorldScene extends Phaser.Scene {
 	}
 
 	create(): void {
-		this.setupAnimations()
 
 		// Setup tilemap
 		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32 });
@@ -193,36 +188,4 @@ export class WorldScene extends Phaser.Scene {
 		}
 	}
 
-	setupAnimations(): void {
-		// animations
-		this.anims.create({
-			key: "throw",
-			frameRate: 8,
-			frames: this.anims.generateFrameNumbers('slime', {
-				start: 0,
-				end: 4
-			}),
-			repeat: FOREVER
-		});
-
-		this.anims.create({
-			key: "standing",
-			frameRate: 8,
-			frames: this.anims.generateFrameNumbers('slime', {
-				start: 5,
-				end: 10
-			}),
-			repeat: FOREVER
-		});
-
-		this.anims.create({
-			key: "crawling",
-			frameRate: 14,
-			frames: this.anims.generateFrameNumbers('slime', {
-				start: 11,
-				end: 19
-			}),
-			repeat: FOREVER
-		});
-	}
 }

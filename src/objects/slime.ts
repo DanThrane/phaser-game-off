@@ -1,4 +1,5 @@
 import { Entity, IEntityStats } from "./entity";
+import { FOREVER } from "phaser";
 
 
 interface IAIMovementParameters {
@@ -23,6 +24,7 @@ const enum States {
 export class Slime extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	private nextAllowedAttack: number = 0;
+	private currentState: States = States.IDLE;
 
 	constructor(
 		private externalRefs: IExternalReferences,
@@ -48,15 +50,67 @@ export class Slime extends Entity {
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.setCircle(12, 4, 12);
 	}
+
+
+	static preload(scene: Phaser.Scene) {
+		scene.load.spritesheet(
+			"slime",
+			"assets/slime.png",
+			{ frameWidth: 32, frameHeight: 32 }
+		);
+	}
 	
-	create() {
+	create(): void {
+		const sceneAnims = this.scene.anims;
+
+		sceneAnims.create({
+			key: "throw",
+			frameRate: 8,
+			frames: sceneAnims.generateFrameNumbers('slime', {
+				start: 0,
+				end: 4
+			}),
+			repeat: FOREVER
+		});
+
+		sceneAnims.create({
+			key: "standing",
+			frameRate: 8,
+			frames: sceneAnims.generateFrameNumbers('slime', {
+				start: 5,
+				end: 10
+			}),
+			repeat: FOREVER
+		});
+
+		sceneAnims.create({
+			key: "crawling",
+			frameRate: 14,
+			frames: sceneAnims.generateFrameNumbers('slime', {
+				start: 11,
+				end: 19
+			}),
+			repeat: FOREVER
+		});
+
+		sceneAnims.create({
+			key: "death",
+			frameRate: 14,
+			frames: sceneAnims.generateFrameNumbers('slime', {
+				start: 20,
+				end: 26
+			}),
+			repeat: FOREVER
+		});
+
 		this.anims.load("crawling");
 		this.anims.load("standing");
 		this.anims.load("throw");
+		this.anims.load("death");
 		this.setupEvents()
 	}
 
-	update(time: number, dt: number) {
+	update(time: number, dt: number): void {
 
 		// chase - no real path finding
 		let playerPosition = this.externalRefs.player.getCenter()
@@ -72,18 +126,26 @@ export class Slime extends Entity {
 			isNotEmpty: true
 		}, this.scene.cameras.main);
 
+		let state = States.IDLE;
+
 		if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
-			this.emit(States.WALKING_TOWARD_PLAYER);
+			state = States.WALKING_TOWARD_PLAYER;
 		} else if (canReachPlayer && tilesInTheWay.length === 0 ) {
-			this.emit(States.SHOOT_AT_PLAYER, time);
-		} else {
-			this.emit(States.IDLE)
+			state = States.SHOOT_AT_PLAYER; 
 		}
+
+		this.currentState = state;
+		this.emit(state, time, dt);
+	}
+
+	public get state() {
+		return this.currentState;
 	}
 
 	private setupEvents() {
 		this.once(States.DEATH, () => {
 			// I am deaded
+			this.anims.play("death", true)
 			this.phBody.enable = false
 			this.externalRefs.myGroup.kill(this)
 			this.setVelocity(0,0);
