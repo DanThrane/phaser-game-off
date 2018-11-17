@@ -1,5 +1,5 @@
 import { Entity, IEntityStats } from "./entity";
-import { FOREVER } from "phaser";
+import { FOREVER, NONE } from "phaser";
 
 
 interface IAIMovementParameters {
@@ -60,46 +60,15 @@ export class Slime extends Entity {
 			{ frameWidth: 32, frameHeight: 32 }
 		);
 	}
-	
-	public create(): void {
-		this.setupAnimations();
-		this.subscribeToEvents();
-	}
 
-	public get state() {
-		return this.currentState;
-	}
-
-	public update(time: number, dt: number): void {
-
-		// chase - no real path finding
-		let playerPosition = this.externalRefs.player.getCenter()
-		let distanceToPlayer = this.getCenter().distance(playerPosition);
-
-		let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
-		let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
-
-		let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
-
-		let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
-			isColliding: true,
-			isNotEmpty: true
-		}, this.scene.cameras.main);
-
-		let state = States.IDLE;
-
-		if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
-			state = States.WALKING_TOWARD_PLAYER;
-		} else if (canReachPlayer && tilesInTheWay.length === 0 ) {
-			state = States.SHOOT_AT_PLAYER;
-		}
-
-		this.currentState = state;
-		this.emit(state, time, dt);
-	}
-
-	private setupAnimations() {
-		const sceneAnims = this.scene.anims;
+	/**
+	 * Stuff that needs to be created once, and not per instance.
+	 * This is usually where you create animations because the animations 
+	 * are detached by design from their sprites gameobjects
+	 * @param scene scene ref
+	 */
+	static createOnce(scene: Phaser.Scene): void {
+		const sceneAnims = scene.anims;
 
 		sceneAnims.create({
 			key: "throw",
@@ -137,23 +106,66 @@ export class Slime extends Entity {
 			frames: sceneAnims.generateFrameNumbers('slime', {
 				start: 20,
 				end: 26
-			}),
-			repeat: FOREVER
+			})
 		});
-
+	}
+	
+	/**
+	 * Per instance create method.
+	 */
+	public create(): void {
+		
 		this.anims.load("crawling");
 		this.anims.load("standing");
 		this.anims.load("throw");
 		this.anims.load("death");
+		this.subscribeToEvents();
+	}
+
+	public get state() {
+		return this.currentState;
+	}
+
+	public update(time: number, dt: number): void {
+		let state = States.IDLE;
+
+		if (this.isDead) {
+			state = States.DEATH;
+		} else {
+			// chase - no real path finding
+			let playerPosition = this.externalRefs.player.getCenter()
+			let distanceToPlayer = this.getCenter().distance(playerPosition);
+			let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
+			let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
+	
+			let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
+	
+			let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
+				isColliding: true,
+				isNotEmpty: true
+			}, this.scene.cameras.main);
+
+			if ( isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0 ) {
+				state = States.WALKING_TOWARD_PLAYER;
+			} else if ( canReachPlayer && tilesInTheWay.length === 0 ) {
+				state = States.SHOOT_AT_PLAYER;
+			}
+		} 
+		
+		this.currentState = state;
+		this.emit(state, time, dt);
 	}
 
 	private subscribeToEvents() {
 		this.once(States.DEATH, () => {
-			this.currentState = States.DEATH;
-			this.anims.play("death", true)
-			this.phBody.enable = false
-			this.externalRefs.myGroup.kill(this)
 			this.setVelocity(0,0);
+
+			// order here is very important
+			this.anims.play("death")
+			this.once('animationcomplete', () => {
+				this.phBody.enable = false
+				this.externalRefs.myGroup.kill(this)
+			})			
 		});
 
 		this.on(States.WALKING_TOWARD_PLAYER, () => {

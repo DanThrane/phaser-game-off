@@ -76,7 +76,8 @@ export class WorldScene extends Phaser.Scene {
 
 	}
 
-	create(): void {
+	create(): void {		
+		Slime.createOnce(this);
 
 		// Setup tilemap
 		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32 });
@@ -154,7 +155,7 @@ export class WorldScene extends Phaser.Scene {
 		cam.startFollow(this.player);
 
 		this.player.create()
-		this.enemyGroup.children.each((slime: Entity) => slime.create(), this)
+		this.enemyGroup.children.each((slime: Entity) => slime.create(), this);
 	}
 
 	update(): void {
