@@ -13,11 +13,8 @@ export class WorldScene extends Phaser.Scene {
 		height: 3200
 	};
 	private player!: Player;
-	private enemyGroup!: Phaser.GameObjects.Group;
 	private bullets!: Phaser.Physics.Arcade.Group;
-	private slimePew!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
-
 
 	constructor() {
 		super({
@@ -44,10 +41,6 @@ export class WorldScene extends Phaser.Scene {
 			maxSize: 50
 		});
 
-		this.load.image("bomb", "assets/bomb.png");
-		this.slimePew = this.physics.add.group({
-			defaultKey: "bomb"
-		});
 	}
 
 	shoot(pointer: Phaser.Input.Pointer) {
@@ -89,35 +82,32 @@ export class WorldScene extends Phaser.Scene {
 
 		this.player = new Player(this, this.map.tileToWorldX(4), this.map.tileToWorldY(4), "dude");
 
-		this.enemyGroup = this.add.group([], {
-			runChildUpdate: true,
-			active: true
-		})
-
 		let refs = {
 			player: this.player,
-			map: this.map,
-			myGroup: this.enemyGroup,
-			slimePew: this.slimePew
+			map: this.map
 		};
 
-		this.enemyGroup.addMultiple([
+		Slime.group.addMultiple([
 			new Slime(refs, this, this.map.tileToWorldX(14), this.map.tileToWorldY(10), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(10), this.map.tileToWorldY(15), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(17), this.map.tileToWorldY(18), "slime"),
 			
 			new Slime(refs, this, this.map.tileToWorldX(44), this.map.tileToWorldY(41), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(30), this.map.tileToWorldY(34), "slime"),
-			new Slime(refs, this, this.map.tileToWorldX(37), this.map.tileToWorldY(54), "slime")
+			new Slime(refs, this, this.map.tileToWorldX(37), this.map.tileToWorldY(54), "slime"),
+			
+			new Slime(refs, this, this.map.tileToWorldX(53), this.map.tileToWorldY(44), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(62), this.map.tileToWorldY(21), "slime"),
+			new Slime(refs, this, this.map.tileToWorldX(57), this.map.tileToWorldY(34), "slime")
 		])
 
 		// Add collider between collision tile items and player
 		this.physics.add.collider(layer, this.player)
-		this.physics.add.collider(this.player, this.enemyGroup)
-		this.physics.add.collider(layer, this.enemyGroup)
+		this.physics.add.collider(this.player, Slime.group)
+		this.physics.add.collider(layer, Slime.group)
 
 		// shot overlaps with enemy => damage it
-		this.physics.add.overlap(this.bullets, this.enemyGroup, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+		this.physics.add.overlap(this.bullets, Slime.group, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
 			let entitySlime = slime as Entity;
 			entitySlime.damagedByOtherEntity(this.player)
 			if (entitySlime.isDead) {
@@ -127,17 +117,17 @@ export class WorldScene extends Phaser.Scene {
 			shot.destroy() // shot is consumed by damaged
 		});
 
-		this.physics.add.collider(this.bullets, layer, (bullet: Phaser.GameObjects.GameObject, wall: Phaser.GameObjects.GameObject,) => {
+		this.physics.add.collider(this.bullets, layer, (bullet: Phaser.GameObjects.GameObject) => {
 			bullet.destroy();
 		});
 
-		this.physics.add.collider(layer, this.slimePew, (shot: Phaser.GameObjects.GameObject) => {
+		this.physics.add.collider(Slime.slimePew, layer, (shot: Phaser.GameObjects.GameObject) => {
 			shot.destroy();
 		})
 
-		this.physics.add.overlap(this.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+		this.physics.add.overlap(Slime.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
 			let entity = plaeyr as Entity;
-			let randomSlime = this.enemyGroup.children.entries[0] as Entity; // stupied way of getting the attack stats... maybe the stats should be place more statically
+			let randomSlime = Slime.group.children.entries[0] as Entity; // stupied way of getting the attack stats... maybe the stats should be place more statically
 			entity.damagedByOtherEntity(randomSlime);
 
 			this.cameras.main.shake(600, 0.004) // feel the pain!
@@ -155,7 +145,7 @@ export class WorldScene extends Phaser.Scene {
 		cam.startFollow(this.player);
 
 		this.player.create()
-		this.enemyGroup.children.each((slime: Entity) => slime.create(), this);
+		Slime.group.children.each((slime: Entity) => slime.create(), this);
 	}
 
 	update(): void {

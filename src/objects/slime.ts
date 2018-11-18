@@ -10,9 +10,7 @@ interface IAIMovementParameters {
 
 interface IExternalReferences {
 	player: Entity,
-	map: Phaser.Tilemaps.Tilemap,
-	myGroup: Phaser.GameObjects.Group,
-	slimePew: Phaser.GameObjects.Group
+	map: Phaser.Tilemaps.Tilemap
 }
 
 const enum States {
@@ -26,6 +24,8 @@ export class Slime extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	private nextAllowedAttack: number = 0;
 	private currentState: States = States.IDLE;
+	public static slimePew: Phaser.Physics.Arcade.Group;
+	public static group: Phaser.GameObjects.Group;
 
 	constructor(
 		private externalRefs: IExternalReferences,
@@ -61,6 +61,7 @@ export class Slime extends Entity {
 			"assets/slime.png",
 			{ frameWidth: 32, frameHeight: 32 }
 		);
+		scene.load.image("bomb", "assets/bomb.png");
 	}
 
 	/**
@@ -110,6 +111,15 @@ export class Slime extends Entity {
 				end: 26
 			})
 		});
+
+		this.slimePew = scene.physics.add.group({
+			defaultKey: "bomb"
+		});
+
+		Slime.group = scene.add.group([], {
+			runChildUpdate: true,
+			active: true
+		})
 	}
 	
 	/**
@@ -166,7 +176,7 @@ export class Slime extends Entity {
 			this.anims.play("death")
 			this.once('animationcomplete', () => {
 				this.phBody.enable = false
-				this.externalRefs.myGroup.kill(this)
+				Slime.group.kill(this)
 				this.setDepth(0);
 			})			
 		});
@@ -192,7 +202,7 @@ export class Slime extends Entity {
 				this.setVelocity(0, 0);
 				
 				if (time > this.nextAllowedAttack) {
-					let pew = this.externalRefs.slimePew.get(this.x, this.y);
+					let pew = Slime.slimePew.get(this.x, this.y);
 					if (pew) {
 						pew.setActive(true);
 						pew.setVisible(true);
