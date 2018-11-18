@@ -126,7 +126,6 @@ export class Slime extends Entity {
 	 * Per instance create method.
 	 */
 	public create(): void {
-		
 		this.anims.load("crawling");
 		this.anims.load("standing");
 		this.anims.load("throw");

@@ -3,6 +3,7 @@ import { WorldGenerator } from "../objects/worldGenerator";
 import { Entity } from "../objects/entity";
 import { Slime } from "../objects/slime";
 import { FOREVER } from "phaser";
+import { SlimeKing } from "../objects/slimeKing";
 
 
 export class WorldScene extends Phaser.Scene {
@@ -13,6 +14,7 @@ export class WorldScene extends Phaser.Scene {
 		height: 3200
 	};
 	private player!: Player;
+	private boss!: Entity;
 	private bullets!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
 
@@ -27,7 +29,9 @@ export class WorldScene extends Phaser.Scene {
 
 		this.load.tilemapTiledJSON("tiled-map", "assets/tiled-test.json");
 
+		Player.preload(this);
 		Slime.preload(this);
+		SlimeKing.preload(this);
 
 		this.load.spritesheet(
 			"dude",
@@ -71,6 +75,8 @@ export class WorldScene extends Phaser.Scene {
 
 	create(): void {		
 		Slime.createOnce(this);
+		Player.createOnce(this);
+		SlimeKing.createOnce(this);
 
 		// Setup tilemap
 		this.map = this.make.tilemap({ key: "tiled-map", tileHeight: 32, tileWidth: 32 });
@@ -101,10 +107,18 @@ export class WorldScene extends Phaser.Scene {
 			new Slime(refs, this, this.map.tileToWorldX(57), this.map.tileToWorldY(34), "slime")
 		])
 
+		this.boss = new SlimeKing(refs, this, this.map.tileToWorldX(60), this.map.tileToWorldY(40), "slimeking")
+
 		// Add collider between collision tile items and player
 		this.physics.add.collider(layer, this.player)
 		this.physics.add.collider(this.player, Slime.group)
 		this.physics.add.collider(layer, Slime.group)
+
+		this.physics.add.collider(this.boss, Slime.group)
+		this.physics.add.collider(this.boss, this.player)
+		this.physics.add.overlap(this.bullets, this.boss, (boss, bullet: Phaser.GameObjects.GameObject) => {
+			bullet.destroy();
+		})
 
 		// shot overlaps with enemy => damage it
 		this.physics.add.overlap(this.bullets, Slime.group, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
@@ -145,11 +159,14 @@ export class WorldScene extends Phaser.Scene {
 		cam.startFollow(this.player);
 
 		this.player.create()
+		this.boss.create()
 		Slime.group.children.each((slime: Entity) => slime.create(), this);
 	}
 
-	update(): void {
+	update(time: number, dt: number): void {
+
 		this.player.update()
+		this.boss.update(time, dt)
 
 		// Cleanup;
 		this.bullets.children.each(it => {
