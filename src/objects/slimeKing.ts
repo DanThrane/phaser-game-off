@@ -1,6 +1,5 @@
 import { Entity, IEntityStats } from "./entity";
-import { FOREVER, NONE } from "phaser";
-import { Player } from "./player";
+import { FOREVER } from "phaser";
 
 
 interface IAIMovementParameters {
@@ -22,109 +21,14 @@ const enum States {
 	DEAD = "dead"
 }
 
-interface DeadState {
-	state: States.DEAD
-}
-
-interface IdleState {
-	state: States.IDLE,
-	update: (self: SlimeKing, player: Entity) => void,
-	exitCondition: (self: SlimeKing, player: Entity) => boolean
-	followStates: [States.WALKING_TOWARD_PLAYER]
-}
-
-const IdleState = (): IdleState => ({
-	state: States.IDLE,
-	update: (self: SlimeKing, player: Entity) => undefined,
-	exitCondition: (self: SlimeKing, player: Entity) => player.getCenter().distance(self.getCenter()) < 500,
-	followStates: [States.WALKING_TOWARD_PLAYER]
-});
-
-interface WalkingState {
-	state: States.WALKING_TOWARD_PLAYER
-	update: (self: SlimeKing, player: Entity) => void
-	exitCondition: (self: SlimeKing, player: Entity) => boolean
-	nextStateTransition: number
-	followStates: [States.CHARGING, States.SHOOT_AT_PLAYER]
-}
-
-const WalkingState = (nextStateTransition: number): WalkingState => ({
-	state: States.WALKING_TOWARD_PLAYER,
-	update: (self: SlimeKing, player: Entity) => {
-		let playerPos = player.getCenter()
-		let pointer = playerPos.subtract(self.getCenter()).normalize();
-		let movementVec = pointer.scale(self.movementParameters.movementSpeed);
-		self.setVelocity(movementVec.x, movementVec.y);
-	},
-	nextStateTransition,
-	exitCondition: (self: SlimeKing, player: Entity) => player.getCenter().distance(self.getCenter()) > 500,
-	followStates: [States.CHARGING, States.SHOOT_AT_PLAYER]
-});
-
-interface ShootingAtPlayerState {
-	state: States.SHOOT_AT_PLAYER
-	update: (self: SlimeKing, player: Entity) => void
-	nextShot: number
-	shotsRemaining: number
-	exitCondition: (self: SlimeKing, player: Entity) => boolean
-	followStates: [States.WALKING_TOWARD_PLAYER]
-}
-
-const ShootingAtPlayerState = (): ShootingAtPlayerState => ({
-	state: States.SHOOT_AT_PLAYER,
-	update: (self: SlimeKing, player: Entity) => {
-		if ((self.stateObject as ShootingAtPlayerState).nextShot < new Date().getTime()) {
-			console.log((self.stateObject as ShootingAtPlayerState).nextShot)
-			self.setAcceleration(0, 0);
-			let pew = SlimeKing.slimePew.get(self.x, self.y);
-			if (pew) {
-				pew.setActive(true);
-				pew.setVisible(true);
-				pew.body.x = self.x;
-				pew.body.y = self.y;
-
-				let pointerToPlayer = player.getCenter().subtract(self.getCenter()).normalize();
-				let speedAdded = pointerToPlayer.scale(300);
-				pew.body.velocity.x = speedAdded.x;
-				pew.body.velocity.y = speedAdded.y;
-				(self.stateObject as ShootingAtPlayerState).nextShot = new Date().getTime() + 400;
-				(self.stateObject as ShootingAtPlayerState).shotsRemaining--;
-			}
-		}
-	},
-	nextShot: new Date().getTime(),
-	shotsRemaining: 3,
-	exitCondition: (self: SlimeKing, player: Entity) => ((self.stateObject as ShootingAtPlayerState).shotsRemaining === 0),
-	followStates: [States.WALKING_TOWARD_PLAYER]
-});
-
-interface ChargingState {
-	state: States.CHARGING
-	update: (self: SlimeKing, player: Entity, dt: number) => void
-	chargeDistanceRemaining: number
-	exitCondition: (self: SlimeKing, player: Entity) => boolean
-	followStates: [States.WALKING_TOWARD_PLAYER]
-}
-
-const ChargingState = (): ChargingState => ({
-	state: States.CHARGING,
-	update: (self: SlimeKing, player: Entity, dt: number) => {
-		let playerPos = player.getCenter()
-		let pointer = playerPos.subtract(self.getCenter()).normalize();
-		let movementVec = pointer.scale(self.movementParameters.movementSpeed * 5);
-		self.setVelocity(movementVec.x, movementVec.y);
-		(self.stateObject as ChargingState).chargeDistanceRemaining -= dt;
-	},
-	chargeDistanceRemaining: 2500,
-	exitCondition: (self: SlimeKing, player: Entity) => (self.stateObject as ChargingState).chargeDistanceRemaining <= 0,
-	followStates: [States.WALKING_TOWARD_PLAYER]
-});
-
-
+const WalkingState = (time: number): [number, number, number] => [time + 3000, 0, 0];
+const ShootingAtPlayerState = (time: number): [number, number, number] => [6, time, 0]
+const ChargingState = (): [number, number, number] => [2500, 0, 0];
 
 export class SlimeKing extends Entity {
 	private phBody!: Phaser.Physics.Arcade.Body;
-	stateObject: IdleState | WalkingState | ShootingAtPlayerState | ChargingState | DeadState = IdleState();
+	private stateValues: [number, number, number] = [0, 0, 0];
+	private currentState = States.IDLE;
 	public static slimePew: Phaser.Physics.Arcade.Group;
 	public static group: Phaser.GameObjects.Group;
 
@@ -182,7 +86,8 @@ export class SlimeKing extends Entity {
 		});
 
 		this.slimePew = scene.physics.add.group({
-			defaultKey: "bomb"
+			defaultKey: "bomb",
+			length: 3
 		});
 
 	}
@@ -195,51 +100,58 @@ export class SlimeKing extends Entity {
 		this.subscribeToEvents();
 	}
 
-	public get state() {
-		return this.stateObject.state;
+	public get state(): States {
+		return this.currentState;
 	}
 
 	public update(time: number, dt: number): void {
-		console.log(this.state);
-		switch (this.stateObject.state) {
-			case States.DEAD: {
-				return;
-			}
+		const { player } = this.externalRefs;
+		switch (this.state) {
 			case States.IDLE: {
-				if (this.stateObject.exitCondition(this, this.externalRefs.player)) {
-					this.stateObject = WalkingState(new Date().getTime() + 3000);
+				if (player.getCenter().distance(this.getCenter()) < 500) {
+					this.currentState = States.WALKING_TOWARD_PLAYER;
+					this.stateValues = WalkingState(time);
 				}
 				return;
 			}
 			case States.WALKING_TOWARD_PLAYER: {
-				this.stateObject.update(this, this.externalRefs.player);
-				if (this.stateObject.nextStateTransition < new Date().getTime()) {
-					const nextState = this.stateObject.followStates[Math.random() * this.stateObject.followStates.length | 0];
+				const [nextStateTransition] = this.stateValues;
+				if (player.getCenter().distance(this.getCenter()) > 1200) {
+					this.setVelocity(0, 0);
+					this.currentState = States.IDLE;
+				} else if (nextStateTransition < new Date().getTime()) {
+					const nextState = [States.CHARGING, States.SHOOT_AT_PLAYER][Math.random() * 2 | 0];
 					if (nextState === States.CHARGING) {
-						this.stateObject = ChargingState();
+						this.currentState = States.CHARGING;
+						this.stateValues = ChargingState();
 					} else if (nextState === States.SHOOT_AT_PLAYER) {
-						this.stateObject = ShootingAtPlayerState();
+						this.currentState = States.SHOOT_AT_PLAYER;
+						this.stateValues = ShootingAtPlayerState(time);
 					}
 				}
-				if (this.getCenter().distance(this.externalRefs.player.getCenter()) > 800) {
-					this.stateObject = IdleState();
+				this.emit(States.WALKING_TOWARD_PLAYER, time, dt);
+				return;
+			}
+			case States.SHOOT_AT_PLAYER: {
+				const [shotsRemaining] = this.stateValues;
+				if (shotsRemaining === 0) {
+					this.stateValues = WalkingState(time);
+					this.currentState = States.WALKING_TOWARD_PLAYER;
+
 				}
+				this.emit(States.SHOOT_AT_PLAYER, time, dt);
 				return;
 			}
 			case States.CHARGING: {
-				if (this.stateObject.exitCondition(this, this.externalRefs.player)) {
-					this.stateObject = WalkingState(new Date().getTime() + 3000);
-				} else {
-					this.stateObject.update(this, this.externalRefs.player, dt);
+				const [chargeDistanceRemaining] = this.stateValues;
+				if (chargeDistanceRemaining <= 0) {
+					this.stateValues = WalkingState(time);
+					this.currentState = States.WALKING_TOWARD_PLAYER;
 				}
+				this.emit(States.CHARGING, time, dt);
 				return;
 			}
-			case States.SHOOT_AT_PLAYER:
-				if (this.stateObject.exitCondition(this, this.externalRefs.player)) {
-					this.stateObject = WalkingState(new Date().getTime() + 3000);
-				}
-				this.stateObject.update(this, this.externalRefs.player);
-				return;
+
 		}
 		/* 
 		
@@ -275,5 +187,44 @@ export class SlimeKing extends Entity {
 			this.anims.play("slimeking_idle", true)
 			this.setVelocity(0, 0)
 		});
+
+		this.on(States.WALKING_TOWARD_PLAYER, () => {
+			const { player } = this.externalRefs;
+			let playerPos = player.getCenter()
+			let pointer = playerPos.subtract(this.getCenter()).normalize();
+			let movementVec = pointer.scale(this.movementParameters.movementSpeed);
+			this.setVelocity(movementVec.x, movementVec.y);
+		});
+
+		this.on(States.SHOOT_AT_PLAYER, (time?: number) => {
+			const { player } = this.externalRefs;
+			const [shotsRemaining, nextShot] = this.stateValues;
+			if (nextShot < time!) {
+				this.setAcceleration(0, 0);
+				let pew = SlimeKing.slimePew.get(this.x, this.y);
+				if (pew) {
+					pew.setActive(true);
+					pew.setVisible(true);
+					pew.body.x = this.x;
+					pew.body.y = this.y;
+
+					let pointerToPlayer = player.getCenter().subtract(this.getCenter()).normalize();
+					let speedAdded = pointerToPlayer.scale(300);
+					pew.body.velocity.x = speedAdded.x;
+					pew.body.velocity.y = speedAdded.y;
+					this.stateValues = [shotsRemaining - 1, time! + 200, 0];
+				}
+			}
+		});
+
+		this.on(States.CHARGING, (_?: number, dt?: number) => {
+			const [chargeDistanceRemaining] = this.stateValues;
+			const { player } = this.externalRefs;
+			let playerPos = player.getCenter()
+			let pointer = playerPos.subtract(this.getCenter()).normalize();
+			let movementVec = pointer.scale(this.movementParameters.movementSpeed * 8);
+			this.setVelocity(movementVec.x, movementVec.y);
+			this.stateValues = [chargeDistanceRemaining - dt!, 0, 0];
+		})
 	}
 }
