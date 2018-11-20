@@ -4,6 +4,7 @@ import { Entity } from "../objects/entity";
 import { Slime } from "../objects/slime";
 import { FOREVER } from "phaser";
 import { SlimeKing } from "../objects/slimeKing";
+import { CharacterEntity } from "../objects/character";
 
 
 export class WorldScene extends Phaser.Scene {
@@ -17,6 +18,7 @@ export class WorldScene extends Phaser.Scene {
 	private boss!: Entity;
 	private bullets!: Phaser.Physics.Arcade.Group;
 	private nextAllowedAttack: number = 0;
+	private gui!: Phaser.GameObjects.Container;
 
 	constructor() {
 		super({
@@ -122,8 +124,8 @@ export class WorldScene extends Phaser.Scene {
 
 		// shot overlaps with enemy => damage it
 		this.physics.add.overlap(this.bullets, Slime.group, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
-			let entitySlime = slime as Entity;
-			entitySlime.damagedByOtherEntity(this.player)
+			let entitySlime = slime as CharacterEntity;
+			entitySlime.damagedByOther(this.player)
 			if (entitySlime.isDead) {
 				// it has been deaded
 				slime.emit('death');
@@ -140,9 +142,8 @@ export class WorldScene extends Phaser.Scene {
 		})
 
 		this.physics.add.overlap(Slime.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
-			let entity = plaeyr as Entity;
-			let randomSlime = Slime.group.children.entries[0] as Entity; // stupied way of getting the attack stats... maybe the stats should be place more statically
-			entity.damagedByOtherEntity(randomSlime);
+			let entity = plaeyr as Player;
+			entity.damagedByOther(Slime.group.getChildren()[0] as CharacterEntity);
 
 			this.cameras.main.shake(600, 0.004) // feel the pain!
 			
@@ -150,13 +151,44 @@ export class WorldScene extends Phaser.Scene {
 				// it has been deaded
 				entity.emit('death');
 			}
+
+			plaeyr.emit("hit", shot)
 			shot.destroy() // shot is consumed by damaged
 		});
 
 
+		this.gui = this.add.container(0, 720 / 2)
+
+		this.gui.add([
+			this.add.rectangle(undefined, undefined, 600, 720, 0x2d896a),
+			this.add.text(20, -330, `Player health: ${this.player.health}`),
+			this.add.text(20, -310, `Enemies remaining: ${Slime.group.getLength()}`),
+			this.add.text(20, -290, `Bosses remaining: 1`)
+		]);
+
+		this.gui.setDepth(4)
+
+		this.player.on('hit', () => {
+			let text = this.gui.getAt(1) as Phaser.GameObjects.Text
+			text.setText(`Player health: ${this.player.health}`)
+		})
+
+		this.player.on('gotKill', () => {
+			let text = this.gui.getAt(2) as Phaser.GameObjects.Text
+			text.setText(`Enemies remaining: ${Slime.group.getChildren().filter((enemy) => {
+				return !(enemy as CharacterEntity).isDead
+			}).length}`)
+		})
+
+		this.gui.scrollFactorX = 0
+		this.gui.scrollFactorY = 0
+
+
 		// Scroll to the player		
 		let cam = this.cameras.main;
-		cam.startFollow(this.player);
+		cam.startFollow(this.player, true, undefined, undefined, 140, 20);
+
+		
 
 		this.player.create()
 		this.boss.create()

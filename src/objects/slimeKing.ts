@@ -1,4 +1,4 @@
-import { Entity, IEntityStats } from "./entity";
+import { Entity } from "./entity";
 import { FOREVER } from "phaser";
 
 
@@ -32,31 +32,32 @@ export class SlimeKing extends Entity {
 	public static slimePew: Phaser.Physics.Arcade.Group;
 	public static group: Phaser.GameObjects.Group;
 
+	movementSpeed = 30; // normal not charging
+	protected health = 500;
+	protected mana = 80;
+
+	detectionRadius = 500
+	reach = 180
+	immortal = false
+	ethereal = false
+	maxHealth = 500
+	maxMana = 80
+	atk = 6
+	def = 1
+
 	constructor(
 		private externalRefs: IExternalReferences,
 		scene: Phaser.Scene,
 		x: number, y: number,
 		texture: string,
-		frame?: string | number,
-		stats: IEntityStats = {
-			health: 80,
-			mana: 20,
-			atk: 3,
-			def: 1
-		},
-		public movementParameters: IAIMovementParameters = {
-			movementSpeed: 30,
-			detectionRadius: 500,
-			reach: 180
-		}
+		frame?: string | number
 	) {
-		super(scene, x, y, texture, stats, frame);
+		super(scene, x, y, texture, frame);
 
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.syncBounds = true;
-
-		this.setDepth(1);
+		this.phBody.setImmovable(true)
 	}
 
 
@@ -98,6 +99,8 @@ export class SlimeKing extends Entity {
 	public create(): void {
 		this.anims.load("slimeking_idle");
 		this.subscribeToEvents();
+		
+		this.setDepth(1);
 	}
 
 	public get state(): States {
@@ -192,7 +195,7 @@ export class SlimeKing extends Entity {
 			const { player } = this.externalRefs;
 			let playerPos = player.getCenter()
 			let pointer = playerPos.subtract(this.getCenter()).normalize();
-			let movementVec = pointer.scale(this.movementParameters.movementSpeed);
+			let movementVec = pointer.scale(this.movementSpeed);
 			this.setVelocity(movementVec.x, movementVec.y);
 		});
 
@@ -222,7 +225,7 @@ export class SlimeKing extends Entity {
 			const { player } = this.externalRefs;
 			let playerPos = player.getCenter()
 			let pointer = playerPos.subtract(this.getCenter()).normalize();
-			let movementVec = pointer.scale(this.movementParameters.movementSpeed * 8);
+			let movementVec = pointer.scale(this.movementSpeed * 8);
 			this.setVelocity(movementVec.x, movementVec.y);
 			this.stateValues = [chargeDistanceRemaining - dt!, 0, 0];
 		})
