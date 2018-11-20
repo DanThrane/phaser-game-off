@@ -1,5 +1,6 @@
-import { Entity, IEntityStats } from "./entity";
+import { Entity } from "./entity";
 import { FOREVER, NONE } from "phaser";
+import { CharacterEntity } from "./character";
 
 
 interface IAIMovementParameters {
@@ -20,38 +21,38 @@ const enum States {
 	SHOOT_AT_PLAYER	= "shootAtPlayer"
 }
 
-export class Slime extends Entity {
+export class Slime extends CharacterEntity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	private nextAllowedAttack: number = 0;
 	private currentState: States = States.IDLE;
 	public static slimePew: Phaser.Physics.Arcade.Group;
 	public static group: Phaser.GameObjects.Group;
 
+	protected health = 80;
+	protected mana = 20;
+	movementSpeed = 20;
+	immortal = false;
+	ethereal = false;
+	maxHealth = 80;
+	maxMana = 20;
+	atk = 3;
+	def = 1;
+	detectionRadius = 500;
+	reach = 180;
+
 	constructor(
 		private externalRefs: IExternalReferences,
 		scene: Phaser.Scene,
 		x: number, y: number,
 		texture: string,
-		frame?: string | number,
-		stats: IEntityStats = {
-			health: 80,
-			mana: 20,
-			atk: 3,
-			def: 1
-		},
-		public movementParameters: IAIMovementParameters = {
-			movementSpeed: 30,
-			detectionRadius: 500,
-			reach: 180
-		}
+		frame?: string | number
 	) {
-		super(scene, x, y, texture, stats, frame);
+		super(scene, x, y, texture, frame);
+
 
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.setCircle(12, 4, 12);
-		
-		this.setDepth(1);
 	}
 
 
@@ -131,6 +132,7 @@ export class Slime extends Entity {
 		this.anims.load("throw");
 		this.anims.load("death");
 		this.subscribeToEvents();
+		this.setDepth(1);
 	}
 
 	public get state() {
@@ -146,8 +148,8 @@ export class Slime extends Entity {
 			// chase - no real path finding
 			let playerPosition = this.externalRefs.player.getCenter()
 			let distanceToPlayer = this.getCenter().distance(playerPosition);
-			let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
-			let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
+			let canReachPlayer = distanceToPlayer <= this.width + this.reach;
+			let isPlayerWithinDetectionRadius = distanceToPlayer <= this.detectionRadius;
 	
 			let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
 	
@@ -176,6 +178,7 @@ export class Slime extends Entity {
 			this.once('animationcomplete', () => {
 				this.phBody.enable = false
 				Slime.group.kill(this)
+				this.externalRefs.player.emit('gotKill', this)
 				this.setDepth(0);
 			})			
 		});
@@ -191,7 +194,7 @@ export class Slime extends Entity {
 				this.setFlipX(false)
 			}
 
-			let movementVec = pointer.scale(this.movementParameters.movementSpeed);
+			let movementVec = pointer.scale(this.movementSpeed);
 			this.setVelocity(movementVec.x, movementVec.y);
 		});
 

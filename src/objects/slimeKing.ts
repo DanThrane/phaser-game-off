@@ -1,6 +1,7 @@
-import { Entity, IEntityStats } from "./entity";
+import { Entity } from "./entity";
 import { FOREVER, NONE } from "phaser";
 import { Player } from "./player";
+import { CharacterEntity } from "./character";
 
 
 interface IAIMovementParameters {
@@ -53,7 +54,7 @@ const WalkingState = (nextStateTransition: number): WalkingState => ({
 	update: (self: SlimeKing, player: Entity) => {
 		let playerPos = player.getCenter()
 		let pointer = playerPos.subtract(self.getCenter()).normalize();
-		let movementVec = pointer.scale(self.movementParameters.movementSpeed);
+		let movementVec = pointer.scale(self.movementSpeed);
 		self.setVelocity(movementVec.x, movementVec.y);
 	},
 	nextStateTransition,
@@ -111,7 +112,7 @@ const ChargingState = (): ChargingState => ({
 	update: (self: SlimeKing, player: Entity, dt: number) => {
 		let playerPos = player.getCenter()
 		let pointer = playerPos.subtract(self.getCenter()).normalize();
-		let movementVec = pointer.scale(self.movementParameters.movementSpeed * 5);
+		let movementVec = pointer.scale(self.movementSpeed * 5);
 		self.setVelocity(movementVec.x, movementVec.y);
 		(self.stateObject as ChargingState).chargeDistanceRemaining -= dt;
 	},
@@ -121,38 +122,38 @@ const ChargingState = (): ChargingState => ({
 });
 
 
-
-export class SlimeKing extends Entity {
+export class SlimeKing extends CharacterEntity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	stateObject: IdleState | WalkingState | ShootingAtPlayerState | ChargingState | DeadState = IdleState();
 	public static slimePew: Phaser.Physics.Arcade.Group;
 	public static group: Phaser.GameObjects.Group;
+
+	movementSpeed = 30; // normal not charging
+	protected health = 500;
+	protected mana = 80;
+
+	detectionRadius = 500
+	reach = 180
+	immortal = false
+	ethereal = false
+	maxHealth = 500
+	maxMana = 80
+	atk = 6
+	def = 1
 
 	constructor(
 		private externalRefs: IExternalReferences,
 		scene: Phaser.Scene,
 		x: number, y: number,
 		texture: string,
-		frame?: string | number,
-		stats: IEntityStats = {
-			health: 80,
-			mana: 20,
-			atk: 3,
-			def: 1
-		},
-		public movementParameters: IAIMovementParameters = {
-			movementSpeed: 30,
-			detectionRadius: 500,
-			reach: 180
-		}
+		frame?: string | number
 	) {
-		super(scene, x, y, texture, stats, frame);
+		super(scene, x, y, texture, frame);
 
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.syncBounds = true;
-
-		this.setDepth(1);
+		this.phBody.setImmovable(true)
 	}
 
 
@@ -193,6 +194,8 @@ export class SlimeKing extends Entity {
 	public create(): void {
 		this.anims.load("slimeking_idle");
 		this.subscribeToEvents();
+		
+		this.setDepth(1);
 	}
 
 	public get state() {
@@ -200,7 +203,6 @@ export class SlimeKing extends Entity {
 	}
 
 	public update(time: number, dt: number): void {
-		console.log(this.state);
 		switch (this.stateObject.state) {
 			case States.DEAD: {
 				return;
