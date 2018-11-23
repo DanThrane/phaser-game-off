@@ -1,12 +1,6 @@
 import { Entity } from "./entity";
 import { CharacterEntity } from "./character";
-
-type WASDkeys = {
-	w: Phaser.Input.Keyboard.Key
-	s: Phaser.Input.Keyboard.Key
-	a: Phaser.Input.Keyboard.Key
-	d: Phaser.Input.Keyboard.Key
-}
+import { Weapon, Pistol, Shotgun } from "./weapon";
 
 export class Player extends CharacterEntity {
 	private cursors: Phaser.Input.Keyboard.CursorKeys;
@@ -23,7 +17,9 @@ export class Player extends CharacterEntity {
 	maxMana = 100;
 	atk = 10;
 	def = 5;
-	
+	weapon: [Weapon, Weapon] = [new Shotgun(), new Shotgun()]
+	leftLastFired: boolean = false;
+
 	constructor(
 		scene: Phaser.Scene,
 		x: number, y: number,
@@ -37,7 +33,7 @@ export class Player extends CharacterEntity {
 		// would we really want to have that failure be silent? Can this method
 		// even return undefined?
 		this.scene.input.mouse.enabled = true;
-		
+
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.setCircle(16);

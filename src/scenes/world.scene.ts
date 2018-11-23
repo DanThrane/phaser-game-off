@@ -50,15 +50,13 @@ export class WorldScene extends Phaser.Scene {
 	}
 
 	shoot(pointer: Phaser.Input.Pointer) {
-		//this.input.mouse.requestPointerLock();
-		const now = new Date().getTime();
-		if (now > this.nextAllowedAttack) {
-			// Logic for shooting here
 
-			let pointerInCameraSpace = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
-			let relativePos = pointerInCameraSpace.subtract(this.player.getCenter());
-			const pointerToPos = relativePos.normalize();
-			
+		let pointerInCameraSpace = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+		let relativePos = pointerInCameraSpace.subtract(this.player.getCenter());
+		const pointerToPos = relativePos.normalize();
+		const firedBullets = this.player.weapon[this.player.leftLastFired ? 0 : 1].shoot(pointerToPos);
+		this.player.leftLastFired = !this.player.leftLastFired;
+		firedBullets.forEach(v => {
 			const bullet = this.bullets.get(this.player.x, this.player.y);
 			if (bullet) {
 				bullet.setActive(true);
@@ -66,13 +64,10 @@ export class WorldScene extends Phaser.Scene {
 				bullet.body.x = this.player.x;
 				bullet.body.y = this.player.y;
 
-				let scaled = pointerToPos.scale(1024)
-				bullet.body.velocity.y = scaled.y;
-				bullet.body.velocity.x = scaled.x;
+				bullet.body.velocity.y = v.y;
+				bullet.body.velocity.x = v.x;
 			}
-			this.nextAllowedAttack = now + 150;
-		}
-
+		});
 	}
 
 	create(): void {		
