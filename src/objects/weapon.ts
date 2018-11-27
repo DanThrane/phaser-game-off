@@ -36,8 +36,7 @@ export class Shotgun extends Weapon {
             this.nextAllowedAttack = now + this.fireRate;
             // FIXME: Play sound
             normalizedVector.scale(this.shotSpeed);
-            a(this.shoot);
-            return [...Array(this.shotsPerFire).keys()].map(i =>
+            return [...Array(this.shotsPerFire).keys()].map(_ =>
                 new Phaser.Math.Vector2(normalizedVector.x + rand(), normalizedVector.y + rand())
             );
         }
@@ -45,8 +44,4 @@ export class Shotgun extends Weapon {
     }
 }
 
-const rand = () => Math.random() * 500;
-
-function a(a: Function) {
-    a();
-}
+const rand = () => Math.random() * 200 + 100;
