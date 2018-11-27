@@ -17,7 +17,6 @@ export class WorldScene extends Phaser.Scene {
 	private player!: Player;
 	private boss!: Entity;
 	private bullets!: Phaser.Physics.Arcade.Group;
-	private nextAllowedAttack: number = 0;
 	private gui!: Phaser.GameObjects.Container;
 
 	constructor() {
@@ -41,6 +40,7 @@ export class WorldScene extends Phaser.Scene {
 			{ frameWidth: 32, frameHeight: 48 }
 		);
 
+		this.load.audio(Music.MUSIC_2, "assets/GameMusic2.mp3");
 		this.load.image("bullet", "assets/star.png");
 		this.bullets = this.physics.add.group({
 			defaultKey: "bullet",
@@ -70,7 +70,11 @@ export class WorldScene extends Phaser.Scene {
 		});
 	}
 
-	create(): void {		
+	create(): void {
+
+		const sound = this.sound.add(Music.MUSIC_2, { loop: true, rate: 1.8 });
+		sound.play()
+		console.log(sound)
 		Slime.createOnce(this);
 		Player.createOnce(this);
 		SlimeKing.createOnce(this);
@@ -94,11 +98,11 @@ export class WorldScene extends Phaser.Scene {
 			new Slime(refs, this, this.map.tileToWorldX(14), this.map.tileToWorldY(10), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(10), this.map.tileToWorldY(15), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(17), this.map.tileToWorldY(18), "slime"),
-			
+
 			new Slime(refs, this, this.map.tileToWorldX(44), this.map.tileToWorldY(41), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(30), this.map.tileToWorldY(34), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(37), this.map.tileToWorldY(54), "slime"),
-			
+
 			new Slime(refs, this, this.map.tileToWorldX(53), this.map.tileToWorldY(44), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(62), this.map.tileToWorldY(21), "slime"),
 			new Slime(refs, this, this.map.tileToWorldX(57), this.map.tileToWorldY(34), "slime")
@@ -141,7 +145,7 @@ export class WorldScene extends Phaser.Scene {
 			entity.damagedByOther(Slime.group.getChildren()[0] as CharacterEntity);
 
 			this.cameras.main.shake(600, 0.004) // feel the pain!
-			
+
 			if (entity.isDead) {
 				// it has been deaded
 				entity.emit('death');
@@ -183,7 +187,7 @@ export class WorldScene extends Phaser.Scene {
 		let cam = this.cameras.main;
 		cam.startFollow(this.player, true, undefined, undefined, 140, 20);
 
-		
+
 
 		this.player.create()
 		this.boss.create()
@@ -207,4 +211,8 @@ export class WorldScene extends Phaser.Scene {
 		}
 	}
 
+}
+
+const enum Music {
+	MUSIC_2 = "music2"
 }
