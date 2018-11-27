@@ -37,11 +37,29 @@ export class Shotgun extends Weapon {
             // FIXME: Play sound
             normalizedVector.scale(this.shotSpeed);
             return [...Array(this.shotsPerFire).keys()].map(_ =>
-                new Phaser.Math.Vector2(normalizedVector.x + rand(), normalizedVector.y + rand())
+                new Phaser.Math.Vector2(normalizedVector.x + rand(100, 200), normalizedVector.y + rand(100, 200))
             );
         }
         return [];
     }
 }
 
-const rand = () => Math.random() * 200 + 100;
+export class Minigun extends Weapon {
+    fireRate: 100 = 100;
+    nextAllowedAttack: number = 0;
+    shotsPerFire: number = 1;
+    shotSpeed: number = 1500;
+
+    shoot = (normalizedVector: Phaser.Math.Vector2): Phaser.Math.Vector2[] => {
+        const now = new Date().getTime();
+        if (this.nextAllowedAttack < now) {
+            this.nextAllowedAttack = now + this.fireRate;
+            // FIXME: Play sound
+            normalizedVector.scale(this.shotSpeed);
+            return [new Phaser.Math.Vector2(normalizedVector.x + rand(20, 50), normalizedVector.y + rand(20, 50))]
+        }
+        return [];
+    }
+}
+
+const rand = (offset: number, maxRand: number) => Math.random() * maxRand + offset;

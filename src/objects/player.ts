@@ -1,6 +1,6 @@
 import { Entity } from "./entity";
 import { CharacterEntity } from "./character";
-import { Weapon, Pistol, Shotgun } from "./weapon";
+import { Weapon, Pistol, Shotgun, Minigun } from "./weapon";
 
 export class Player extends CharacterEntity {
 	private cursors: Phaser.Input.Keyboard.CursorKeys;
@@ -17,7 +17,7 @@ export class Player extends CharacterEntity {
 	maxMana = 100;
 	atk = 10;
 	def = 5;
-	weapon: [Weapon, Weapon] = [new Shotgun(), new Shotgun()]
+	weapon: [Weapon, Weapon] = [new Minigun(), new Shotgun()]
 	leftLastFired: boolean = false;
 
 	constructor(
