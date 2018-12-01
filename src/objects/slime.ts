@@ -225,5 +225,9 @@ export class Slime extends CharacterEntity {
 			this.anims.play("standing", true)
 			this.setVelocity(0, 0)
 		});
+
+		this.on('hit', (damage: number, assailant?: CharacterEntity) => {
+			this.health -= damage;
+		})
 	}
 }

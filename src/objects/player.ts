@@ -37,6 +37,7 @@ export class Player extends CharacterEntity {
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
 		this.phBody.setCircle(16);
+		this.phBody.syncBounds = true
 	}
 
 	public create() {
@@ -49,10 +50,15 @@ export class Player extends CharacterEntity {
 			});
 		});
 		this.setDepth(1)
+		this.subscribeToEvents();
 	}
 
 	public update() {
 		this.handleInput();
+		if (this.isDead) {
+			// it has been deaded
+			this.emit('death');
+		}
 	}
 
 	private handleInput() {
@@ -76,5 +82,23 @@ export class Player extends CharacterEntity {
 
 		// Attack
 
+	}
+
+	private subscribeToEvents() {
+		this.on('knockback', (otherBody:  Phaser.GameObjects.Sprite) => {
+
+			let pointer = otherBody.getCenter().subtract(this.getCenter());
+			let rev = pointer.scale(-1)
+
+			this.emit('hit', 50, otherBody);
+			this.setVelocity(rev.x, rev.y)
+		});
+
+		this.on('hit', (damage: number, otherBody?: Entity) => {
+			this.scene.cameras.main.shake(600, 0.004);
+			this.health = Math.max(this.health - damage, 0);
+			console.log("player hit", damage, this.health)
+			this.emit('afterhit');
+		})
 	}
 }

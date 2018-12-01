@@ -1,5 +1,6 @@
 import { Entity } from "./entity";
 import { FOREVER } from "phaser";
+import { CharacterEntity } from "./character";
 
 
 interface IAIMovementParameters {
@@ -13,19 +14,20 @@ interface IExternalReferences {
 	map: Phaser.Tilemaps.Tilemap
 }
 
-const enum States {
+export const enum States {
 	IDLE = "idle",
 	WALKING_TOWARD_PLAYER = "WALKING_TOWARD_PLAYER",
 	CHARGING = "charging",
 	SHOOT_AT_PLAYER = "SHOOT_AT_PLAYER",
-	DEAD = "dead"
+	DEAD = "dead",
+	KNOCKBACK = "knockback"
 }
 
 const WalkingState = (time: number): [number, number, number] => [time + 3000, 0, 0];
 const ShootingAtPlayerState = (time: number): [number, number, number] => [6, time, 0]
 const ChargingState = (): [number, number, number] => [2500, 0, 0];
 
-export class SlimeKing extends Entity {
+export class SlimeKing extends CharacterEntity {
 	private phBody!: Phaser.Physics.Arcade.Body;
 	private stateValues: [number, number, number] = [0, 0, 0];
 	private currentState = States.IDLE;
@@ -33,14 +35,14 @@ export class SlimeKing extends Entity {
 	public static group: Phaser.GameObjects.Group;
 
 	movementSpeed = 30; // normal not charging
-	protected health = 500;
+	protected health = 800;
 	protected mana = 80;
 
 	detectionRadius = 500
 	reach = 180
 	immortal = false
 	ethereal = false
-	maxHealth = 500
+	maxHealth = 800
 	maxMana = 80
 	atk = 6
 	def = 1
@@ -56,7 +58,8 @@ export class SlimeKing extends Entity {
 
 		this.scene.physics.world.enable(this);
 		this.phBody = this.body as Phaser.Physics.Arcade.Body;
-		this.phBody.syncBounds = true;
+		this.phBody.setCircle(165);
+		this.phBody.syncBounds = true
 		this.phBody.setImmovable(true)
 	}
 
@@ -109,6 +112,12 @@ export class SlimeKing extends Entity {
 
 	public update(time: number, dt: number): void {
 		const { player } = this.externalRefs;
+
+		if (this.isDead) {
+			this.currentState = States.DEAD
+			this.emit(this.currentState)
+		}
+
 		switch (this.state) {
 			case States.IDLE: {
 				if (player.getCenter().distance(this.getCenter()) < 500) {
@@ -122,7 +131,7 @@ export class SlimeKing extends Entity {
 				if (player.getCenter().distance(this.getCenter()) > 1200) {
 					this.setVelocity(0, 0);
 					this.currentState = States.IDLE;
-				} else if (nextStateTransition < new Date().getTime()) {
+				} else if (nextStateTransition < time) {
 					const nextState = [States.CHARGING, States.SHOOT_AT_PLAYER][Math.random() * 2 | 0];
 					if (nextState === States.CHARGING) {
 						this.currentState = States.CHARGING;
@@ -154,41 +163,22 @@ export class SlimeKing extends Entity {
 				this.emit(States.CHARGING, time, dt);
 				return;
 			}
+			case States.KNOCKBACK: {
+				let dist: number = player.getCenter().distance(this.getCenter());
 
-		}
-		/* 
-		
-				if (this.isDead) {
-					state = States.DEAD;
-				} else if (this.state === States.IDLE) {
-					// chase - no real path finding
-					let playerPosition = this.externalRefs.player.getCenter()
-					let distanceToPlayer = this.getCenter().distance(playerPosition);
-					let canReachPlayer = distanceToPlayer <= this.width + this.movementParameters.reach;
-					let isPlayerWithinDetectionRadius = distanceToPlayer <= this.movementParameters.detectionRadius;
-		
-					let line = new Phaser.Geom.Line(playerPosition.x, playerPosition.y, this.x, this.y);
-		
-					let tilesInTheWay = this.externalRefs.map.getTilesWithinShape(line, {
-						isColliding: true,
-						isNotEmpty: true
-					}, this.scene.cameras.main);
-		
-					if (isPlayerWithinDetectionRadius && !canReachPlayer && tilesInTheWay.length === 0) {
-						state = States.WALKING_TOWARD_PLAYER;
-					} else if (canReachPlayer && tilesInTheWay.length === 0) {
-						state = States.SHOOT_AT_PLAYER;
-					}
-				} else if (this.stateObject.state === States.CHARGING) {
-		
+				if (dist >= 175) {
+					this.currentState = States.WALKING_TOWARD_PLAYER;
+					this.emit(States.WALKING_TOWARD_PLAYER, time, dt);
 				}
-				this.emit(state, time, dt); */
+			}
+		}
 	}
 
 	private subscribeToEvents() {
 		this.on(States.IDLE, () => {
 			this.anims.play("slimeking_idle", true)
 			this.setVelocity(0, 0)
+			this.currentState = States.IDLE;
 		});
 
 		this.on(States.WALKING_TOWARD_PLAYER, () => {
@@ -228,6 +218,26 @@ export class SlimeKing extends Entity {
 			let movementVec = pointer.scale(this.movementSpeed * 8);
 			this.setVelocity(movementVec.x, movementVec.y);
 			this.stateValues = [chargeDistanceRemaining - dt!, 0, 0];
-		})
+		});
+
+		this.on(States.KNOCKBACK, (time: number, dt: number) => {
+			this.currentState = States.KNOCKBACK
+			const { player } = this.externalRefs;
+			this.phBody.allowDrag = true
+			let pointer = player.getCenter().subtract(this.getCenter()).normalize();
+			let rev = pointer.scale(-(this.movementSpeed))
+			this.setVelocity(rev.x, rev.y)
+		});
+
+		this.on('hit', (damage: number, assailent?: CharacterEntity) => {
+			this.health -= damage;
+			console.log("boss hit", this.health)
+		});
+
+		this.once(States.DEAD, () => {
+			this.setVelocity(0,0)
+			this.phBody.enable = false
+			this.setDepth(0);
+		}) 
 	}
 }

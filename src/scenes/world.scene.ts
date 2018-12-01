@@ -3,7 +3,7 @@ import { WorldGenerator } from "../objects/worldGenerator";
 import { Entity } from "../objects/entity";
 import { Slime } from "../objects/slime";
 import { FOREVER } from "phaser";
-import { SlimeKing } from "../objects/slimeKing";
+import { SlimeKing, States } from "../objects/slimeKing";
 import { CharacterEntity } from "../objects/character";
 
 
@@ -72,7 +72,7 @@ export class WorldScene extends Phaser.Scene {
 
 	create(): void {
 
-		const sound = this.sound.add(Music.MUSIC_2, { loop: true, rate: 1.8 });
+		const sound = this.sound.add(Music.MUSIC_2, { loop: true, rate: 1.3 });
 		sound.play()
 		console.log(sound)
 		Slime.createOnce(this);
@@ -84,6 +84,7 @@ export class WorldScene extends Phaser.Scene {
 		this.tileset = this.map.addTilesetImage("tiles");
 		const layer = this.map.createStaticLayer("Tile Layer 1", this.tileset, 0, 0);
 
+		
 		// Set collision for Tile items 2 - 3 (inclusive, wall and rock) 
 		this.map.setCollisionBetween(2, 3);
 
@@ -110,66 +111,83 @@ export class WorldScene extends Phaser.Scene {
 
 		this.boss = new SlimeKing(refs, this, this.map.tileToWorldX(60), this.map.tileToWorldY(40), "slimeking")
 
+
 		// Add collider between collision tile items and player
-		this.physics.add.collider(layer, this.player)
+		this.physics.add.collider(this.player, this.boss);
+
+		this.physics.add.collider(this.boss, [this.player], (boss: Phaser.GameObjects.GameObject, player: any) => {
+			//console.log(boss, player)
+			let slimeking = (boss as SlimeKing);
+
+			if (slimeking.state === States.CHARGING) {
+				let body = (boss.body as Phaser.Physics.Arcade.Body)
+				body.setVelocity(0,0)
+				body.setBounce(1,1)
+				boss.emit('knockback')
+				this.player.emit('knockback', boss)
+			}
+		})
+
 		this.physics.add.collider(this.player, Slime.group)
 		this.physics.add.collider(layer, Slime.group)
+		this.physics.add.collider(this.player, layer)
 
 		this.physics.add.collider(this.boss, Slime.group)
-		this.physics.add.collider(this.boss, this.player)
+
 		this.physics.add.overlap(this.bullets, this.boss, (boss, bullet: Phaser.GameObjects.GameObject) => {
+			this.boss.emit('hit', this.player.calculatedDamage, this.player);
 			bullet.destroy();
 		})
 
-		// shot overlaps with enemy => damage it
-		this.physics.add.overlap(this.bullets, Slime.group, (slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
-			let entitySlime = slime as CharacterEntity;
-			entitySlime.damagedByOther(this.player)
-			if (entitySlime.isDead) {
-				// it has been deaded
-				slime.emit('death');
-			}
-			shot.destroy() // shot is consumed by damaged
-		});
+		this.physics.add.overlap(SlimeKing.slimePew, this.player, (player, shot) => {
+			player.emit('hit', (this.boss as CharacterEntity).calculatedDamage, this.boss);
+			shot.destroy()
+		})
 
-		this.physics.add.collider(this.bullets, layer, (bullet: Phaser.GameObjects.GameObject) => {
-			bullet.destroy();
-		});
+
+		// shot overlaps with enemy => damage it
+		this.physics.add.overlap(this.bullets, Slime.group,
+			(slime: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+				let entitySlime = slime as CharacterEntity;
+				entitySlime.emit('hit', this.player.calculatedDamage, this.player);
+				shot.destroy() // shot is consumed by damaged
+			}
+		);
+
+		this.physics.add.collider(this.bullets, layer, 
+			(bullet: Phaser.GameObjects.GameObject) => {
+				bullet.destroy();
+			}
+		);
 
 		this.physics.add.collider(Slime.slimePew, layer, (shot: Phaser.GameObjects.GameObject) => {
 			shot.destroy();
 		})
 
-		this.physics.add.overlap(Slime.slimePew, this.player, (plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
-			let entity = plaeyr as Player;
-			entity.damagedByOther(Slime.group.getChildren()[0] as CharacterEntity);
-
-			this.cameras.main.shake(600, 0.004) // feel the pain!
-
-			if (entity.isDead) {
-				// it has been deaded
-				entity.emit('death');
+		this.physics.add.overlap(Slime.slimePew, this.player,
+			(plaeyr: Phaser.GameObjects.GameObject, shot: Phaser.GameObjects.GameObject) => {
+				let aSlime = Slime.group.getChildren()[0] as CharacterEntity;
+				
+				plaeyr.emit("hit", aSlime.calculatedDamage, aSlime);
+				shot.destroy() // shot is consumed by damaged
 			}
-
-			plaeyr.emit("hit", shot)
-			shot.destroy() // shot is consumed by damaged
-		});
+		);
 
 
 		this.gui = this.add.container(0, 720 / 2)
 
 		this.gui.add([
 			this.add.rectangle(undefined, undefined, 600, 720, 0x2d896a),
-			this.add.text(20, -330, `Player health: ${this.player.health}`),
+			this.add.text(20, -330, `Player health: ${this.player.remainingHealth}`),
 			this.add.text(20, -310, `Enemies remaining: ${Slime.group.getLength()}`),
 			this.add.text(20, -290, `Bosses remaining: 1`)
 		]);
 
 		this.gui.setDepth(4)
 
-		this.player.on('hit', () => {
+		this.player.on('afterhit', () => {
 			let text = this.gui.getAt(1) as Phaser.GameObjects.Text
-			text.setText(`Player health: ${this.player.health}`)
+			text.setText(`Player health: ${this.player.remainingHealth}`)
 		})
 
 		this.player.on('gotKill', () => {

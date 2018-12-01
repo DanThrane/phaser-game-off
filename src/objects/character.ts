@@ -23,12 +23,24 @@ export abstract class CharacterEntity extends Entity {
         super(scene, x, y, texture, frame);
     }
 
-    public damagedByOther(char: CharacterEntity) {
-        this.health -= Math.abs(char.atk - char.def)
-    }
-
     public get isDead() {
         return this.health <= 0;
+    }
+
+    public get attackPower() {
+        return this.atk;
+    }
+
+    public get defence() {
+        return this.def;
+    }
+
+    public get remainingHealth() {
+        return this.health;
+    }
+
+    public get calculatedDamage() {
+        return Math.abs(this.atk - this.def);
     }
 
 }
