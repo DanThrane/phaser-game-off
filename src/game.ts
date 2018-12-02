@@ -38,6 +38,18 @@ export class Game extends Phaser.Game {
 
 window.onload = () => {
   const game = new Game(config);
+  const container = document.querySelector('.container');
+
+  if (container !== null) {
+    let con = (container as HTMLElement)
+
+    con.style.position = "fixed";
+    con.style.top = "50%";
+    con.style.left = "50%";
+    const transform = "translate(-50%, -50%)"
+    con.style.transform = transform
+    con.style.webkitTransform = transform
+  }
 
   const desiredRatio = 16 / 9;
   const inverseRatio = 1 / desiredRatio;

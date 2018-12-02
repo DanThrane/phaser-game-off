@@ -63,7 +63,6 @@ export class SlimeKing extends CharacterEntity {
 		this.phBody.setImmovable(true)
 	}
 
-
 	static preload(scene: Phaser.Scene) {
 		scene.load.spritesheet(
 			"slimeking",
