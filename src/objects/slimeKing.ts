@@ -234,8 +234,8 @@ export class SlimeKing extends CharacterEntity {
 		});
 
 		this.once(States.DEAD, () => {
-			this.setVelocity(0,0)
-			this.phBody.enable = false
+			this.setVelocity(0,0);
+			this.phBody.enable = false;
 			this.setDepth(0);
 		}) 
 	}

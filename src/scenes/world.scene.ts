@@ -177,8 +177,7 @@ export class WorldScene extends Phaser.Scene {
 		this.gui = this.add.container(0, 720 / 2)
 
 		this.gui.add([
-			this.add.rectangle(undefined, undefined, 600, 720, 0x2d896a),
-			this.add.text(20, -330, `Player health: ${this.player.remainingHealth}`),
+			this.add.rectangle(this.player.maxHealth / 2 + 20, -330, this.player.health, 40, 0x00ff00),
 			this.add.text(20, -310, `Enemies remaining: ${Slime.group.getLength()}`),
 			this.add.text(20, -290, `Bosses remaining: 1`)
 		]);
@@ -186,15 +185,17 @@ export class WorldScene extends Phaser.Scene {
 		this.gui.setDepth(4)
 
 		this.player.on('afterhit', () => {
-			let text = this.gui.getAt(1) as Phaser.GameObjects.Text
-			text.setText(`Player health: ${this.player.remainingHealth}`)
+			let rect = this.gui.getAt(0) as Phaser.GameObjects.Rectangle;
+			rect.width = this.player.health;
+			const normalizedHealth = this.player.health / this.player.maxHealth * 255; 
+			rect.fillColor = Phaser.Display.Color.GetColor(255 - normalizedHealth, normalizedHealth, 0);
 		})
 
 		this.player.on('gotKill', () => {
-			let text = this.gui.getAt(2) as Phaser.GameObjects.Text
-			text.setText(`Enemies remaining: ${Slime.group.getChildren().filter((enemy) => {
-				return !(enemy as CharacterEntity).isDead
-			}).length}`)
+			let text = this.gui.getAt(1) as Phaser.GameObjects.Text
+			text.setText(`Enemies remaining: ${Slime.group.getChildren().filter(enemy  => 
+				!(enemy as CharacterEntity).isDead
+			).length}`)
 		})
 
 		this.gui.scrollFactorX = 0

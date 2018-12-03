@@ -62,4 +62,4 @@ export class Minigun extends Weapon {
     }
 }
 
-const rand = (offset: number, maxRand: number) => Math.random() * maxRand + offset;
+const rand = (offset: number, maxRand: number) => (Math.random() * maxRand + offset) - maxRand / 2;
